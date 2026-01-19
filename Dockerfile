@@ -17,6 +17,9 @@ RUN npm run build
 # Production image
 FROM base AS release
 
+# Install su-exec for dropping privileges
+RUN apk add --no-cache su-exec
+
 # Copy production dependencies
 COPY --from=deps /app/node_modules node_modules
 
@@ -29,11 +32,14 @@ COPY src/views dist/views
 
 COPY package.json .
 
+# Copy and set up entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Create data and custom-templates directories
 RUN mkdir -p data custom-templates && chown -R node:node data custom-templates
 
 ENV NODE_ENV=production
-USER node
 EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+ENTRYPOINT ["docker-entrypoint.sh"]
