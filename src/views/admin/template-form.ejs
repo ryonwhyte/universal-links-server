@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin/templates', backText: 'Templates', user: user }) %>
+
+    <h1><%= title %></h1>
+
+    <% if (error) { %>
+      <article style="background: var(--pico-color-red-100);">
+        <p style="color: var(--pico-color-red-700); margin: 0;"><%= error %></p>
+      </article>
+    <% } %>
+
+    <form method="POST" action="<%= template?.id ? `/admin/templates/${template.id}` : '/admin/templates/new' %>">
+      <%- include('../partials/csrf') %>
+
+      <% if (template?.id) { %>
+        <!-- Editing existing template - name is read-only -->
+        <label>
+          Name
+          <input type="text" value="<%= template.name %>" disabled>
+          <small>Template name cannot be changed after creation.</small>
+        </label>
+      <% } else { %>
+        <!-- New template -->
+        <label>
+          Name
+          <input type="text" name="name" value="<%= template?.name || '' %>" required pattern="[a-z0-9-]+" placeholder="my-template">
+          <small>Lowercase letters, numbers, and hyphens only.</small>
+        </label>
+      <% } %>
+
+      <label>
+        Content (EJS)
+        <textarea name="content" rows="20" required style="font-family: monospace; font-size: 0.875rem;"><%= template?.content || '' %></textarea>
+        <small>Write your EJS template here. See the starter template and variables reference below.</small>
+      </label>
+
+      <details>
+        <summary>Available Variables Reference</summary>
+        <ul>
+          <li><code>&lt;%= app.name %&gt;</code> - App name</li>
+          <li><code>&lt;%= app.logo_url %&gt;</code> - App logo URL</li>
+          <li><code>&lt;%= app.primary_color %&gt;</code> - App primary color</li>
+          <li><code>&lt;%= app.ios_app_store_url %&gt;</code> - iOS App Store URL</li>
+          <li><code>&lt;%= app.android_play_store_url %&gt;</code> - Android Play Store URL</li>
+          <li><code>&lt;%= app.web_fallback_url %&gt;</code> - Web fallback URL</li>
+          <li><code>&lt;%= route.name %&gt;</code> - Route name</li>
+          <li><code>&lt;%= route.prefix %&gt;</code> - Route prefix</li>
+          <li><code>&lt;%= token %&gt;</code> - Token from URL</li>
+          <li><code>&lt;%= data %&gt;</code> - API response (check with <code>&lt;% if (data) { %&gt;</code>)</li>
+          <li><code>&lt;%= deepLink %&gt;</code> - Custom scheme deep link</li>
+          <li><code>&lt;%= playStoreUrl %&gt;</code> - Play Store URL with referrer</li>
+          <li><code>&lt;%= referrerToken %&gt;</code> - Referrer token for deferred linking</li>
+        </ul>
+      </details>
+
+      <div role="group">
+        <button type="submit"><%= template?.id ? 'Save Changes' : 'Create Template' %></button>
+        <a href="/admin/templates" role="button" class="outline secondary">Cancel</a>
+      </div>
+    </form>
+
+    <% if (!template?.id) { %>
+    <article>
+      <header>
+        <h3>Starter Template</h3>
+      </header>
+      <p>Copy this as a starting point:</p>
+      <pre style="background: var(--pico-code-background-color); padding: 1rem; overflow-x: auto; font-size: 0.75rem;"><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;&lt;%= app.name %&gt; - &lt;%= route.name %&gt;&lt;/title&gt;
+  &lt;link rel="stylesheet" href="https://unpkg.com/@picocss/pico@2/css/pico.min.css"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;main class="container" style="text-align: center; padding-top: 2rem;"&gt;
+    &lt;h1&gt;&lt;%= route.name %&gt;&lt;/h1&gt;
+
+    &lt;% if (data) { %&gt;
+      &lt;p&gt;&lt;%= JSON.stringify(data) %&gt;&lt;/p&gt;
+    &lt;% } %&gt;
+
+    &lt;div style="margin-top: 2rem;"&gt;
+      &lt;% if (app.ios_app_store_url) { %&gt;
+        &lt;a href="&lt;%= app.ios_app_store_url %&gt;" role="button"&gt;Download on App Store&lt;/a&gt;
+      &lt;% } %&gt;
+      &lt;% if (playStoreUrl) { %&gt;
+        &lt;a href="&lt;%= playStoreUrl %&gt;" role="button" class="secondary"&gt;Get it on Google Play&lt;/a&gt;
+      &lt;% } %&gt;
+    &lt;/div&gt;
+  &lt;/main&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+    </article>
+    <% } %>
+  </main>
+</body>
+</html>

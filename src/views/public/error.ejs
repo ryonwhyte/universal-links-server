@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="landing-page">
+  <main class="container">
+    <article style="text-align: center; max-width: 400px; margin: 100px auto;">
+      <% if (app?.logo_url) { %>
+        <img src="<%= app.logo_url %>" alt="<%= app.name %>" style="max-width: 120px; margin-bottom: 1rem;">
+      <% } %>
+
+      <h1><%= title %></h1>
+      <p><%= message %></p>
+
+      <% if (app?.web_fallback_url) { %>
+        <a href="<%= app.web_fallback_url %>" role="button">Visit Website</a>
+      <% } %>
+    </article>
+  </main>
+</body>
+</html>

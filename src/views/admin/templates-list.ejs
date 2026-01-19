@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin', backText: 'Dashboard', user: user }) %>
+
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <hgroup>
+        <h1>Templates</h1>
+        <p>Manage landing page templates</p>
+      </hgroup>
+      <div role="group">
+        <a href="/admin/templates/new" role="button">+ New Template</a>
+        <a href="/admin/templates/actions/export" role="button" class="outline">Export</a>
+        <a href="/admin/templates/actions/import" role="button" class="outline">Import</a>
+      </div>
+    </header>
+
+    <% if (customTemplates.length > 0) { %>
+      <h2>Custom Templates</h2>
+      <p><small>Stored in <code>custom-templates/</code> folder. Editable and persisted via volume mount.</small></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Last Modified</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% customTemplates.forEach(template => { %>
+            <tr>
+              <td><code><%= template.name %></code></td>
+              <td><%= template.updated_at ? new Date(template.updated_at).toLocaleDateString() : '-' %></td>
+              <td>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a href="/admin/templates/<%= template.id %>" role="button" class="outline small">Edit</a>
+                  <form method="POST" action="/admin/templates/<%= template.id %>/delete" style="margin: 0;">
+                    <%- include('../partials/csrf') %>
+                    <button type="submit" class="outline secondary small" onclick="return confirm('Delete this template?')">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <article>
+        <p>No custom templates yet.</p>
+        <a href="/admin/templates/new" role="button">Create your first template</a>
+      </article>
+    <% } %>
+
+    <h2>Built-in Templates</h2>
+    <p><small>Read-only templates included with the application. Cannot be modified or deleted.</small></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% builtinTemplates.forEach(template => { %>
+          <tr>
+            <td><code><%= template.name %></code></td>
+            <td><%= template.description || '-' %></td>
+            <td>
+              <a href="/admin/templates/<%= template.id %>" role="button" class="outline small">View</a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
+    <article>
+      <header>
+        <h3>Template Priority</h3>
+      </header>
+      <p>When a route uses a template name, the system checks in this order:</p>
+      <ol>
+        <li><strong>Custom templates</strong> (<code>custom-templates/</code> folder)</li>
+        <li><strong>Built-in templates</strong> (included with app)</li>
+      </ol>
+      <p>This means you can override a built-in template by creating a custom template with the same name.</p>
+    </article>
+  </main>
+</body>
+</html>

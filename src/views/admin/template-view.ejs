@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin/templates', backText: 'Templates', user: user }) %>
+
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <hgroup>
+        <h1><code><%= template.name %></code></h1>
+        <p>Built-in template (read-only)</p>
+      </hgroup>
+    </header>
+
+    <article>
+      <header>
+        <h3>Template Content</h3>
+      </header>
+      <pre style="background: var(--pico-code-background-color); padding: 1rem; overflow-x: auto; font-size: 0.8rem;"><code><%= template.content %></code></pre>
+    </article>
+
+    <p>
+      <small>Built-in templates cannot be edited directly. To customize, create a new template with the same name to override it.</small>
+    </p>
+
+    <a href="/admin/templates" role="button" class="outline">Back to Templates</a>
+  </main>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin/templates', backText: 'Templates', user: user }) %>
+
+    <h1>Import Templates</h1>
+
+    <% if (error) { %>
+      <article style="background: var(--pico-color-red-100);">
+        <p style="color: var(--pico-color-red-700); margin: 0;"><%= error %></p>
+      </article>
+    <% } %>
+
+    <% if (success) { %>
+      <article style="background: var(--pico-color-green-100);">
+        <p style="color: var(--pico-color-green-700); margin: 0;"><%= success %></p>
+      </article>
+    <% } %>
+
+    <form method="POST" action="/admin/templates/actions/import">
+      <%- include('../partials/csrf') %>
+
+      <label>
+        JSON Content
+        <textarea name="json_content" rows="15" required style="font-family: monospace; font-size: 0.875rem;" placeholder='{
+  "version": 1,
+  "templates": [
+    {
+      "name": "my-template",
+      "description": "My custom template",
+      "content": "<!DOCTYPE html>..."
+    }
+  ]
+}'></textarea>
+        <small>Paste the exported JSON content here. Existing templates with the same name will be updated.</small>
+      </label>
+
+      <div role="group">
+        <button type="submit">Import Templates</button>
+        <a href="/admin/templates" role="button" class="outline secondary">Cancel</a>
+      </div>
+    </form>
+
+    <article>
+      <header>
+        <h3>Import Format</h3>
+      </header>
+      <p>The JSON should have this structure:</p>
+      <pre style="background: var(--pico-code-background-color); padding: 1rem; overflow-x: auto; font-size: 0.8rem;"><code>{
+  "version": 1,
+  "templates": [
+    {
+      "name": "template-name",
+      "description": "Optional description",
+      "content": "&lt;!DOCTYPE html&gt;..."
+    }
+  ]
+}</code></pre>
+    </article>
+  </main>
+</body>
+</html>

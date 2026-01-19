@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { user: user }) %>
+
+    <header>
+      <hgroup>
+        <h1>Your Apps</h1>
+        <p>Manage Universal Links and App Links for your apps</p>
+      </hgroup>
+      <a href="/admin/apps/new" role="button">+ Add App</a>
+    </header>
+
+    <% if (apps.length === 0) { %>
+      <article>
+        <p>No apps configured yet.</p>
+        <a href="/admin/apps/new" role="button">Create your first app</a>
+      </article>
+    <% } else { %>
+      <% apps.forEach(app => { %>
+        <article>
+          <header>
+            <hgroup>
+              <h2><%= app.name %></h2>
+              <p><%= app.domains %></p>
+            </hgroup>
+          </header>
+
+          <p>
+            <strong>Routes:</strong>
+            <% if (app.routes && app.routes.length > 0) { %>
+              <%= app.routes.map(r => '/' + r.prefix).join(', ') %>
+            <% } else { %>
+              <em>None configured</em>
+            <% } %>
+          </p>
+
+          <p>
+            <% if (app.apple_bundle_id) { %>
+              <small>iOS: <%= app.apple_bundle_id %></small>
+            <% } %>
+            <% if (app.android_package_name) { %>
+              <small>Android: <%= app.android_package_name %></small>
+            <% } %>
+          </p>
+
+          <footer>
+            <div role="group">
+              <a href="/admin/apps/<%= app.id %>" role="button" class="outline">Edit</a>
+              <a href="/admin/apps/<%= app.id %>/routes" role="button" class="outline">Routes</a>
+              <form method="POST" action="/admin/apps/<%= app.id %>/delete" style="display: inline;">
+                <%- include('../partials/csrf') %>
+                <button type="submit" class="outline secondary" onclick="return confirm('Delete this app?')">Delete</button>
+              </form>
+            </div>
+          </footer>
+        </article>
+      <% }); %>
+    <% } %>
+  </main>
+</body>
+</html>

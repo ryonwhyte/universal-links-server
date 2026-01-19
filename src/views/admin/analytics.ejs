@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      text-align: center;
+      padding: 1rem;
+      background: var(--pico-card-background-color);
+      border-radius: var(--pico-border-radius);
+    }
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--pico-primary);
+    }
+    .stat-card .label {
+      color: var(--pico-muted-color);
+      font-size: 0.875rem;
+    }
+    .chart-container {
+      height: 200px;
+      margin-bottom: 2rem;
+    }
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 100%;
+      padding: 1rem 0;
+    }
+    .bar {
+      flex: 1;
+      background: var(--pico-primary);
+      min-width: 8px;
+      border-radius: 2px 2px 0 0;
+      position: relative;
+    }
+    .bar:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--pico-card-background-color);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--pico-muted-border-color);
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin', backText: 'Dashboard', user: user }) %>
+
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <hgroup>
+        <h1>Analytics</h1>
+        <p>Track link opens and app installs</p>
+      </hgroup>
+    </header>
+
+    <!-- Filters -->
+    <form method="GET" action="/admin/analytics" style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+      <select name="app_id" style="width: auto;">
+        <option value="">All Apps</option>
+        <% apps.forEach(app => { %>
+          <option value="<%= app.id %>" <%= selectedAppId === app.id ? 'selected' : '' %>><%= app.name %></option>
+        <% }); %>
+      </select>
+
+      <select name="days" style="width: auto;">
+        <option value="7" <%= selectedDays === 7 ? 'selected' : '' %>>Last 7 days</option>
+        <option value="30" <%= selectedDays === 30 ? 'selected' : '' %>>Last 30 days</option>
+        <option value="90" <%= selectedDays === 90 ? 'selected' : '' %>>Last 90 days</option>
+      </select>
+
+      <button type="submit" class="outline">Apply</button>
+    </form>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="value"><%= stats.total_events %></div>
+        <div class="label">Total Events</div>
+      </div>
+      <div class="stat-card">
+        <div class="value"><%= stats.installs %></div>
+        <div class="label">Installs</div>
+      </div>
+      <div class="stat-card">
+        <div class="value"><%= stats.link_opens %></div>
+        <div class="label">Link Opens</div>
+      </div>
+    </div>
+
+    <!-- Daily Chart -->
+    <% if (stats.by_day.length > 0) { %>
+    <article>
+      <header>
+        <h3>Events Over Time</h3>
+      </header>
+      <div class="chart-container">
+        <div class="bar-chart">
+          <% const maxValue = Math.max(...stats.by_day.map(d => d.installs + d.link_opens), 1); %>
+          <% stats.by_day.forEach(day => { %>
+            <% const total = day.installs + day.link_opens; %>
+            <% const height = (total / maxValue) * 100; %>
+            <div class="bar" style="height: <%= height %>%;" data-tooltip="<%= day.date %>: <%= total %> events"></div>
+          <% }); %>
+        </div>
+      </div>
+      <p style="text-align: center; color: var(--pico-muted-color); font-size: 0.875rem;">
+        <%= stats.by_day.length > 0 ? stats.by_day[0].date : '' %> - <%= stats.by_day.length > 0 ? stats.by_day[stats.by_day.length - 1].date : '' %>
+      </p>
+    </article>
+    <% } %>
+
+    <!-- By Link/Campaign -->
+    <article>
+      <header>
+        <h3>By Link</h3>
+      </header>
+      <% if (stats.by_path.length > 0) { %>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th style="text-align: right;">Installs</th>
+                <th style="text-align: right;">Opens</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% stats.by_path.forEach(item => { %>
+                <tr>
+                  <td><code><%= item.path %></code></td>
+                  <td style="text-align: right;"><%= item.installs %></td>
+                  <td style="text-align: right;"><%= item.link_opens %></td>
+                  <td style="text-align: right;"><strong><%= item.total %></strong></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p style="color: var(--pico-muted-color);">No link data yet. Events will appear here when apps track link opens or deferred link claims.</p>
+      <% } %>
+    </article>
+
+    <!-- Breakdowns -->
+    <div class="breakdown-grid">
+      <article>
+        <header>
+          <h3>By Platform</h3>
+        </header>
+        <% if (stats.by_platform.length > 0) { %>
+          <% stats.by_platform.forEach(item => { %>
+            <div class="breakdown-item">
+              <span><%= item.platform || 'Unknown' %></span>
+              <strong><%= item.count %></strong>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p style="color: var(--pico-muted-color);">No data yet</p>
+        <% } %>
+      </article>
+
+      <article>
+        <header>
+          <h3>By Source</h3>
+        </header>
+        <% if (stats.by_source.length > 0) { %>
+          <% stats.by_source.forEach(item => { %>
+            <div class="breakdown-item">
+              <span><%= item.source || 'Unknown' %></span>
+              <strong><%= item.count %></strong>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p style="color: var(--pico-muted-color);">No data yet</p>
+        <% } %>
+      </article>
+    </div>
+
+    <!-- Recent Events -->
+    <article>
+      <header>
+        <h3>Recent Events</h3>
+      </header>
+      <% if (stats.recent_events.length > 0) { %>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Event</th>
+                <th>Path</th>
+                <th>Platform</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% stats.recent_events.slice(0, 20).forEach(event => { %>
+                <tr>
+                  <td><%= new Date(event.created_at).toLocaleString() %></td>
+                  <td><code><%= event.event_type %></code></td>
+                  <td><code><%= event.deep_link || '-' %></code></td>
+                  <td><%= event.platform || '-' %></td>
+                  <td><%= event.source || '-' %></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p style="color: var(--pico-muted-color);">No events recorded yet. Events will appear here when apps track link opens or deferred link claims.</p>
+      <% } %>
+    </article>
+  </main>
+</body>
+</html>

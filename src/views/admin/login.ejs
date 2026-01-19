@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <article style="max-width: 400px; margin: 100px auto;">
+      <header style="text-align: center;">
+        <img src="/images/logo.png" alt="Universal Links" style="height: 48px; margin-bottom: 1rem;">
+        <p>Admin Login</p>
+      </header>
+
+      <% if (error) { %>
+        <p style="color: var(--pico-color-red-500);"><%= error %></p>
+      <% } %>
+
+      <form method="POST" action="/admin/login">
+        <%- include('../partials/csrf') %>
+        <label>
+          Email
+          <input type="email" name="email" required autocomplete="email" autofocus>
+        </label>
+
+        <label>
+          Password
+          <input type="password" name="password" required autocomplete="current-password">
+        </label>
+
+        <button type="submit">Login</button>
+      </form>
+    </article>
+  </main>
+</body>
+</html>

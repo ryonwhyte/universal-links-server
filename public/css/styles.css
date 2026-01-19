@@ -1,0 +1,99 @@
+/* Custom styles for Universal Links Server */
+
+/* Admin styles */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+header hgroup {
+  margin: 0;
+}
+
+article footer {
+  padding-top: 1rem;
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
+[role="group"] {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.small {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* Table improvements */
+table {
+  font-size: 0.9rem;
+}
+
+table th,
+table td {
+  padding: 0.75rem;
+}
+
+/* Form improvements */
+fieldset {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 8px;
+}
+
+legend {
+  padding: 0 0.5rem;
+  font-weight: 600;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .merchant-card {
+    background: #1a1a2e !important;
+  }
+
+  .merchant-name {
+    color: #fff !important;
+  }
+
+  .location-name {
+    color: #ccc !important;
+    border-color: #333 !important;
+  }
+
+  .location-address {
+    color: #888 !important;
+  }
+}
+
+/* Landing page utilities */
+.landing-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  [role="group"] {
+    width: 100%;
+  }
+
+  [role="group"] > * {
+    flex: 1;
+    text-align: center;
+  }
+}

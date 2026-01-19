@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin/apps/' + app.id + '/routes', backText: 'Back to Routes', user: user }) %>
+
+    <h1><%= title %></h1>
+
+    <% if (error) { %>
+      <article style="background: var(--pico-color-red-100);">
+        <p style="color: var(--pico-color-red-700); margin: 0;"><%= error %></p>
+      </article>
+    <% } %>
+
+    <form method="POST" action="/admin/apps/<%= app.id %>/routes/<%= route?.id ? route.id : 'new' %>">
+      <%- include('../partials/csrf') %>
+      <label>
+        Prefix *
+        <input type="text" name="prefix" value="<%= route?.prefix || '' %>" required pattern="[a-z0-9-]+" placeholder="m">
+        <small>URL prefix like <code>m</code> for <code>/m/token</code>. Lowercase letters, numbers, hyphens only.</small>
+      </label>
+
+      <label>
+        Name *
+        <input type="text" name="name" value="<%= route?.name || '' %>" required placeholder="Merchant">
+        <small>Human-readable name for this route type.</small>
+      </label>
+
+      <label>
+        Template
+        <select name="template">
+          <% templates.forEach(t => { %>
+            <option value="<%= t %>" <%= route?.template === t ? 'selected' : '' %>><%= t %></option>
+          <% }); %>
+        </select>
+        <small>EJS template to render the landing page.</small>
+      </label>
+
+      <label>
+        API Endpoint
+        <input type="url" name="api_endpoint" value="<%= route?.api_endpoint || '' %>" placeholder="https://api.example.com/public/item/{token}">
+        <small>Optional. Use <code>{token}</code> as placeholder for the token value.</small>
+      </label>
+
+      <label>
+        <input type="checkbox" name="universal_link_enabled" <%= route?.universal_link_enabled || route?.universal_link_enabled === undefined ? 'checked' : '' %>>
+        Enable Universal Links
+        <small>Include this route in iOS/Android app link configuration.</small>
+      </label>
+
+      <button type="submit"><%= route?.id ? 'Save Changes' : 'Create Route' %></button>
+    </form>
+  </main>
+</body>
+</html>

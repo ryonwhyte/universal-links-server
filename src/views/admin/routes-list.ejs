@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin', backText: 'Back to Dashboard', user: user }) %>
+
+    <header>
+      <hgroup>
+        <h1>Routes for <%= app.name %></h1>
+        <p>Configure URL prefixes and landing page templates</p>
+      </hgroup>
+      <a href="/admin/apps/<%= app.id %>/routes/new" role="button">+ Add Route</a>
+    </header>
+
+    <% if (routes.length === 0) { %>
+      <article>
+        <p>No routes configured yet.</p>
+        <a href="/admin/apps/<%= app.id %>/routes/new" role="button">Create your first route</a>
+      </article>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Prefix</th>
+            <th>Name</th>
+            <th>Template</th>
+            <th>API Endpoint</th>
+            <th>Universal Link</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% routes.forEach(route => { %>
+            <tr>
+              <td><code>/<%= route.prefix %></code></td>
+              <td><%= route.name %></td>
+              <td><%= route.template %></td>
+              <td>
+                <% if (route.api_endpoint) { %>
+                  <small style="word-break: break-all;"><%= route.api_endpoint.substring(0, 40) %>...</small>
+                <% } else { %>
+                  <em>None</em>
+                <% } %>
+              </td>
+              <td><%= route.universal_link_enabled ? 'Yes' : 'No' %></td>
+              <td>
+                <div role="group">
+                  <a href="/admin/apps/<%= app.id %>/routes/<%= route.id %>" role="button" class="outline small">Edit</a>
+                  <form method="POST" action="/admin/apps/<%= app.id %>/routes/<%= route.id %>/delete" style="display: inline;">
+                    <%- include('../partials/csrf') %>
+                    <button type="submit" class="outline secondary small" onclick="return confirm('Delete this route?')">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+
+    <hr>
+
+    <details>
+      <summary>Available Templates</summary>
+      <ul>
+        <% templates.forEach(t => { %>
+          <li><code><%= t %></code></li>
+        <% }); %>
+      </ul>
+      <p><small>Add new templates by creating EJS files in <code>views/public/templates/</code></small></p>
+    </details>
+  </main>
+</body>
+</html>

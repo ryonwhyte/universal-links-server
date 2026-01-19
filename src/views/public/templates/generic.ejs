@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - <%= app.name %></title>
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    :root {
+      --primary: <%= app.primary_color || '#667eea' %>;
+    }
+    .landing-container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+    .app-logo {
+      max-width: 80px;
+      margin-bottom: 1rem;
+    }
+    .content-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .primary-button {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      margin-bottom: 0.75rem;
+    }
+    .secondary-button {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .store-links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    .store-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #000;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+    .store-link.android {
+      background: #01875f;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+      color: #888;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #ddd;
+    }
+    .divider span {
+      padding: 0 1rem;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body style="background: linear-gradient(135deg, <%= app.primary_color || '#667eea' %> 0%, #764ba2 100%); min-height: 100vh;">
+  <div class="landing-container">
+    <% if (app.logo_url) { %>
+      <img src="<%= app.logo_url %>" alt="<%= app.name %>" class="app-logo">
+    <% } %>
+
+    <div class="content-card">
+      <h1 style="margin-bottom: 0.5rem;"><%= route.name %></h1>
+
+      <% if (data) { %>
+        <p style="color: #666;">Continue in the <%= app.name %> app</p>
+      <% } else { %>
+        <p style="color: #666;">Open this link in the <%= app.name %> app</p>
+      <% } %>
+    </div>
+
+    <a href="<%= deepLink %>" class="primary-button">
+      Open in <%= app.name %>
+    </a>
+
+    <% if (app.web_fallback_url) { %>
+      <a href="<%= app.web_fallback_url %>?token=<%= token %>" class="secondary-button">
+        Continue on Web
+      </a>
+    <% } %>
+
+    <div class="divider">
+      <span>or</span>
+    </div>
+
+    <p style="color: white; margin-bottom: 0.5rem;">Don't have the app?</p>
+
+    <div class="store-links">
+      <% if (app.ios_app_store_url) { %>
+        <a href="<%= app.ios_app_store_url %>" class="store-link">
+          App Store
+        </a>
+      <% } %>
+
+      <% if (playStoreUrl) { %>
+        <a href="<%= playStoreUrl %>" class="store-link android">
+          Google Play
+        </a>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

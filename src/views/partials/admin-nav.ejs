@@ -1,0 +1,32 @@
+<nav>
+  <ul>
+    <% if (typeof backUrl !== 'undefined' && backUrl) { %>
+      <li><a href="<%= backUrl %>">&larr; <%= typeof backText !== 'undefined' ? backText : 'Back' %></a></li>
+    <% } else { %>
+      <li><a href="/admin"><img src="/images/logo.png" alt="Universal Links" style="height: 32px; vertical-align: middle;"></a></li>
+    <% } %>
+  </ul>
+  <ul>
+    <% if (typeof user !== 'undefined' && user) { %>
+      <li>
+        <details class="dropdown">
+          <summary style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <%= user.email %>
+          </summary>
+          <ul dir="rtl">
+            <li><a href="/admin/analytics">Analytics</a></li>
+            <li><a href="/admin/templates">Templates</a></li>
+            <li><a href="/admin/settings">Settings</a></li>
+            <li><a href="/admin/logout">Logout</a></li>
+          </ul>
+        </details>
+      </li>
+    <% } else { %>
+      <li><a href="/admin/logout" role="button" class="outline">Logout</a></li>
+    <% } %>
+  </ul>
+</nav>

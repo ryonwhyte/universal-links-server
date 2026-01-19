@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+
+# Database
+data/*.sqlite
+data/*.sqlite-journal
+data/*.sqlite-wal
+data/*.sqlite-shm
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Custom templates (keep in private repo or on server)
+custom-templates/*.ejs
+
+# Personal/project-specific files
+GO-CARDYFI-ROUTER-PLAN.md
+src/views/public/templates/cardyfi-merchant.ejs

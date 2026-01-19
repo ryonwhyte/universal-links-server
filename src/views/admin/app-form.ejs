@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin', backText: 'Back to Dashboard', user: user }) %>
+
+    <h1><%= title %></h1>
+
+    <% if (error) { %>
+      <article style="background: var(--pico-color-red-100);">
+        <p style="color: var(--pico-color-red-700); margin: 0;"><%= error %></p>
+      </article>
+    <% } %>
+
+    <form method="POST" action="/admin/apps/<%= app?.id ? app.id : 'new' %>">
+      <%- include('../partials/csrf') %>
+      <fieldset>
+        <legend>Basic Info</legend>
+
+        <label>
+          App Name *
+          <input type="text" name="name" value="<%= app?.name || '' %>" required placeholder="My App">
+        </label>
+
+        <label>
+          Slug *
+          <input type="text" name="slug" value="<%= app?.slug || '' %>" required pattern="[a-z0-9-]+" placeholder="my-app" <%= app?.id ? 'readonly' : '' %>>
+          <small>Lowercase letters, numbers, and hyphens only. Used for custom URL scheme.</small>
+        </label>
+
+        <label>
+          Domains *
+          <input type="text" name="domains" value="<%= app?.domains || '' %>" required placeholder="go.myapp.com, links.myapp.com">
+          <small>Comma-separated list of domains that point to this server.</small>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>iOS Configuration</legend>
+
+        <label>
+          Apple Team ID
+          <input type="text" name="apple_team_id" value="<%= app?.apple_team_id || '' %>" placeholder="XXXXXXXXXX">
+        </label>
+
+        <label>
+          Bundle ID
+          <input type="text" name="apple_bundle_id" value="<%= app?.apple_bundle_id || '' %>" placeholder="com.example.myapp">
+        </label>
+
+        <label>
+          App Store URL
+          <input type="url" name="ios_app_store_url" value="<%= app?.ios_app_store_url || '' %>" placeholder="https://apps.apple.com/app/...">
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Android Configuration</legend>
+
+        <label>
+          Package Name
+          <input type="text" name="android_package_name" value="<%= app?.android_package_name || '' %>" placeholder="com.example.myapp">
+        </label>
+
+        <label>
+          SHA256 Fingerprints
+          <input type="text" name="android_sha256_fingerprints" value="<%= app?.android_sha256_fingerprints || '' %>" placeholder="AA:BB:CC:DD:...">
+          <small>Comma-separated for multiple signing keys.</small>
+        </label>
+
+        <label>
+          Play Store URL
+          <input type="url" name="android_play_store_url" value="<%= app?.android_play_store_url || '' %>" placeholder="https://play.google.com/store/apps/details?id=...">
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Branding</legend>
+
+        <label>
+          Logo URL
+          <input type="url" name="logo_url" value="<%= app?.logo_url || '' %>" placeholder="https://example.com/logo.png">
+        </label>
+
+        <label>
+          Primary Color
+          <input type="color" name="primary_color" value="<%= app?.primary_color || '#667eea' %>">
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Fallback</legend>
+
+        <label>
+          Web Fallback URL
+          <input type="url" name="web_fallback_url" value="<%= app?.web_fallback_url || '' %>" placeholder="https://myapp.com">
+          <small>Used when app store URLs aren't available or user is on desktop.</small>
+        </label>
+      </fieldset>
+
+      <button type="submit"><%= app?.id ? 'Save Changes' : 'Create App' %></button>
+    </form>
+  </main>
+</body>
+</html>

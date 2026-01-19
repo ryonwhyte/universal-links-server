@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin', backText: 'Dashboard', user: user }) %>
+
+    <h1>Settings</h1>
+
+    <% if (success) { %>
+      <article style="background: var(--pico-color-green-100);">
+        <p style="color: var(--pico-color-green-700); margin: 0;"><%= success %></p>
+      </article>
+    <% } %>
+
+    <% if (error) { %>
+      <article style="background: var(--pico-color-red-100);">
+        <p style="color: var(--pico-color-red-700); margin: 0;"><%= error %></p>
+      </article>
+    <% } %>
+
+    <article>
+      <header>
+        <h3>Account</h3>
+      </header>
+
+      <p><strong>Email:</strong> <%= user.email %></p>
+
+      <a href="/admin/change-password" role="button" class="outline">Change Password</a>
+    </article>
+
+    <article>
+      <header>
+        <h3>Analytics</h3>
+      </header>
+
+      <form method="POST" action="/admin/settings/analytics">
+        <%- include('../partials/csrf') %>
+
+        <fieldset>
+          <label>
+            <input type="checkbox" name="enabled" value="true" <%= analytics.enabled ? 'checked' : '' %>>
+            Enable analytics tracking
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Analytics Provider</legend>
+          <label>
+            <input type="radio" name="use_umami" value="false" <%= !analytics.use_umami ? 'checked' : '' %>>
+            Internal (built-in dashboard)
+          </label>
+          <label>
+            <input type="radio" name="use_umami" value="true" <%= analytics.use_umami ? 'checked' : '' %>>
+            Umami (external)
+          </label>
+        </fieldset>
+
+        <div id="umami-settings" style="<%= analytics.use_umami ? '' : 'display: none;' %>">
+          <label>
+            Umami URL
+            <input type="url" name="umami_url" value="<%= analytics.umami_url || '' %>" placeholder="https://analytics.example.com">
+            <small>Your Umami instance URL (without trailing slash)</small>
+          </label>
+
+          <label>
+            Site ID
+            <input type="text" name="umami_site_id" value="<%= analytics.umami_site_id || '' %>" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+            <small>The website ID from your Umami dashboard</small>
+          </label>
+
+          <label>
+            API Key (optional)
+            <input type="password" name="umami_api_key" value="<%= analytics.umami_api_key || '' %>" placeholder="Enter API key">
+            <small>Required if your Umami instance needs authentication</small>
+          </label>
+        </div>
+
+        <button type="submit">Save Analytics Settings</button>
+      </form>
+
+      <script>
+        document.querySelectorAll('input[name="use_umami"]').forEach(radio => {
+          radio.addEventListener('change', function() {
+            document.getElementById('umami-settings').style.display =
+              this.value === 'true' ? 'block' : 'none';
+          });
+        });
+      </script>
+    </article>
+
+    <% if (!analytics.use_umami) { %>
+    <article>
+      <header>
+        <h3>View Analytics</h3>
+      </header>
+      <p>View link tracking data in the built-in analytics dashboard.</p>
+      <a href="/admin/analytics" role="button" class="outline">Open Dashboard</a>
+    </article>
+    <% } %>
+  </main>
+</body>
+</html>
