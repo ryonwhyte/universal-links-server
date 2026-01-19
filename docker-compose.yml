@@ -4,8 +4,8 @@ services:
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     volumes:
-      - ./data:/app/data
-      - ./custom-templates:/app/custom-templates
+      - app_data:/app/data
+      - app_templates:/app/custom-templates
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-3000}
@@ -15,3 +15,7 @@ services:
       - TRUST_PROXY=${TRUST_PROXY:-true}
       - CLEANUP_KEY=${CLEANUP_KEY:-}
     restart: unless-stopped
+
+volumes:
+  app_data:
+  app_templates:
