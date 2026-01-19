@@ -1,4 +1,5 @@
 FROM node:20-alpine AS base
+# Cache bust: v2
 WORKDIR /app
 
 # Install dependencies
