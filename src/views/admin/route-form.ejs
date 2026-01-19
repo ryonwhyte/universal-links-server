@@ -45,11 +45,13 @@
         <small>Optional. Use <code>{token}</code> as placeholder for the token value.</small>
       </label>
 
-      <label>
-        <input type="checkbox" name="universal_link_enabled" <%= route?.universal_link_enabled || route?.universal_link_enabled === undefined ? 'checked' : '' %>>
-        Enable Universal Links
+      <fieldset>
+        <label>
+          <input type="checkbox" name="universal_link_enabled" <%= route?.universal_link_enabled || route?.universal_link_enabled === undefined ? 'checked' : '' %>>
+          Enable Universal Links
+        </label>
         <small>Include this route in iOS/Android app link configuration.</small>
-      </label>
+      </fieldset>
 
       <button type="submit"><%= route?.id ? 'Save Changes' : 'Create Route' %></button>
     </form>
