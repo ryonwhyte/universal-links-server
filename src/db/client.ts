@@ -31,6 +31,17 @@ export function initializeDatabase(): void {
 
   // Create tables
   createTables();
+
+  // Run migrations for existing databases
+  runMigrations();
+}
+
+function runMigrations(): void {
+  // Add web_fallback_url to routes table if it doesn't exist
+  const routeColumns = db.prepare("PRAGMA table_info(routes)").all() as { name: string }[];
+  if (!routeColumns.some(col => col.name === 'web_fallback_url')) {
+    db.exec('ALTER TABLE routes ADD COLUMN web_fallback_url TEXT');
+  }
 }
 
 function createTables(): void {
@@ -63,6 +74,7 @@ function createTables(): void {
       template TEXT DEFAULT 'generic',
       api_endpoint TEXT,
       universal_link_enabled INTEGER DEFAULT 1,
+      web_fallback_url TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       UNIQUE(app_id, prefix)
     );

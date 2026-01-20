@@ -12,7 +12,10 @@
         <h1>Your Apps</h1>
         <p>Manage Universal Links and App Links for your apps</p>
       </hgroup>
-      <a href="/admin/apps/new" role="button">+ Add App</a>
+      <div style="display: flex; gap: 0.5rem;">
+        <a href="/admin/apps/import" role="button" class="outline">Import</a>
+        <a href="/admin/apps/new" role="button">+ Add App</a>
+      </div>
     </header>
 
     <% if (apps.length === 0) { %>
@@ -52,6 +55,7 @@
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <a href="/admin/apps/<%= app.id %>" role="button" class="outline">Edit</a>
               <a href="/admin/apps/<%= app.id %>/routes" role="button" class="outline">Routes</a>
+              <a href="/admin/apps/<%= app.id %>/export" role="button" class="outline secondary">Export</a>
               <form method="POST" action="/admin/apps/<%= app.id %>/delete" style="display: inline;">
                 <%- include('../partials/csrf') %>
                 <button type="submit" class="outline secondary" onclick="return confirm('Delete this app?')">Delete</button>

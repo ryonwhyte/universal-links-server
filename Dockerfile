@@ -1,5 +1,5 @@
 FROM node:20-alpine AS base
-# Cache bust: v3
+# Cache bust: v5
 WORKDIR /app
 
 # Install dependencies

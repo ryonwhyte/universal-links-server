@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { UAParser } from 'ua-parser-js';
 import { getRouteByPrefix } from '../../middleware/resolveApp.js';
 import { generateFingerprint } from '../../services/fingerprint.js';
 import { storeDeferredLink, buildPlayStoreUrl } from '../../services/deferred.js';
@@ -6,6 +7,32 @@ import { cache, API_CACHE_TTL } from '../../services/cache.js';
 import { renderTemplate } from '../../services/templates.js';
 
 const router = Router();
+
+/**
+ * Parse user agent and return device info.
+ */
+function parseUserAgent(userAgent: string) {
+  const parser = new UAParser(userAgent);
+  const result = parser.getResult();
+
+  const osName = result.os.name?.toLowerCase() || '';
+  const isIOS = osName === 'ios';
+  const isAndroid = osName === 'android';
+  const isMobile = result.device.type === 'mobile' || result.device.type === 'tablet' || isIOS || isAndroid;
+
+  return {
+    isIOS,
+    isAndroid,
+    isMobile,
+    browser: result.browser.name,
+    browserVersion: result.browser.version,
+    os: result.os.name,
+    osVersion: result.os.version,
+    device: result.device.model,
+    deviceType: result.device.type || 'desktop',
+    deviceVendor: result.device.vendor,
+  };
+}
 
 // Timeout for API requests (10 seconds)
 const API_TIMEOUT = 10000;
@@ -74,6 +101,21 @@ router.get('/:prefix/:token', async (req: Request, res: Response) => {
     return;
   }
 
+  // Device detection using ua-parser-js
+  const userAgent = req.get('user-agent') || '';
+  const deviceInfo = parseUserAgent(userAgent);
+  const { isIOS, isAndroid, isMobile } = deviceInfo;
+
+  // Get web fallback URL (route-level overrides app-level)
+  const webFallbackUrl = route.web_fallback_url || app.web_fallback_url;
+
+  // Desktop users with web fallback → redirect immediately (no landing page)
+  if (!isMobile && webFallbackUrl) {
+    const redirectUrl = webFallbackUrl.replace('{token}', encodeURIComponent(token));
+    res.redirect(302, redirectUrl);
+    return;
+  }
+
   // Generate fingerprint and store deferred link
   const fingerprint = generateFingerprint(req);
   const deepLinkPath = `/${prefix}/${token}`;
@@ -129,6 +171,31 @@ router.get('/:prefix/:token', async (req: Request, res: Response) => {
   let playStoreUrl = app.android_play_store_url;
   if (playStoreUrl) {
     playStoreUrl = buildPlayStoreUrl(playStoreUrl, referrerToken);
+  }
+
+  // Mobile users with template "none" → skip landing page, redirect to store
+  if (isMobile && route.template === 'none') {
+    if (isIOS && app.ios_app_store_url) {
+      res.redirect(302, app.ios_app_store_url);
+      return;
+    }
+    if (isAndroid && playStoreUrl) {
+      res.redirect(302, playStoreUrl);
+      return;
+    }
+    // No store URL configured - fall back to web fallback if available
+    if (webFallbackUrl) {
+      const redirectUrl = webFallbackUrl.replace('{token}', encodeURIComponent(token));
+      res.redirect(302, redirectUrl);
+      return;
+    }
+    // No fallback either - show error
+    res.status(404).render('public/error', {
+      title: 'Not Configured',
+      message: 'No app store or web fallback configured for this route.',
+      app,
+    });
+    return;
   }
 
   // Render the template (hybrid: DB templates first, then code templates)

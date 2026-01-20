@@ -27,6 +27,7 @@ export interface Route {
   template: string;
   api_endpoint: string | null;
   universal_link_enabled: number;
+  web_fallback_url: string | null;
   created_at: string;
 }
 

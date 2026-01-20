@@ -33,16 +33,22 @@
         Template
         <select name="template">
           <% templates.forEach(t => { %>
-            <option value="<%= t %>" <%= route?.template === t ? 'selected' : '' %>><%= t %></option>
+            <option value="<%= t %>" <%= route?.template === t ? 'selected' : '' %>><%= t === 'none' ? 'none (redirect only)' : t %></option>
           <% }); %>
         </select>
-        <small>EJS template to render the landing page.</small>
+        <small>Landing page template. Select "none" to skip the landing page and redirect mobile users directly to the app store.</small>
       </label>
 
       <label>
         API Endpoint
         <input type="url" name="api_endpoint" value="<%= route?.api_endpoint || '' %>" placeholder="https://api.example.com/public/item/{token}">
         <small>Optional. Use <code>{token}</code> as placeholder for the token value.</small>
+      </label>
+
+      <label>
+        Web Fallback URL
+        <input type="url" name="web_fallback_url" value="<%= route?.web_fallback_url || '' %>" placeholder="https://example.com/store/{token}">
+        <small>Optional. Desktop users redirect here. Use <code>{token}</code> for the token value.</small>
       </label>
 
       <fieldset>

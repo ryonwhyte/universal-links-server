@@ -105,6 +105,7 @@ function getDbTemplates(): Template[] {
 /**
  * Get all available templates.
  * Priority: custom > builtin > db
+ * Includes special "none" option for redirect-only routes.
  */
 export function getAllTemplates(): Template[] {
   const customTemplates = getCustomTemplates();
@@ -129,7 +130,17 @@ export function getAllTemplates(): Template[] {
     templateMap.set(t.name, t);
   }
 
-  return Array.from(templateMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  const templates = Array.from(templateMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+  // Add special "none" option at the beginning for redirect-only routes
+  const noneTemplate: Template = {
+    id: 'special:none',
+    name: 'none',
+    description: 'No landing page - redirect mobile users directly to app store',
+    source: 'builtin',
+  };
+
+  return [noneTemplate, ...templates];
 }
 
 /**

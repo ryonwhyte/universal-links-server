@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin', backText: 'Back to Dashboard', user: user }) %>
+
+    <h1><%= title %></h1>
+
+    <% if (error) { %>
+      <article style="background: var(--pico-color-red-100);">
+        <p style="color: var(--pico-color-red-700); margin: 0;"><%= error %></p>
+      </article>
+    <% } %>
+
+    <article>
+      <p>Paste an exported app JSON below to import it with all routes.</p>
+
+      <form method="POST" action="/admin/apps/import">
+        <%- include('../partials/csrf') %>
+
+        <label>
+          Export JSON
+          <textarea name="json_data" rows="15" required placeholder='{"version":1,"app":{"name":"My App",...},"routes":[...]}'></textarea>
+          <small>Paste the contents of an exported JSON file.</small>
+        </label>
+
+        <button type="submit">Import App</button>
+      </form>
+    </article>
+  </main>
+</body>
+</html>
