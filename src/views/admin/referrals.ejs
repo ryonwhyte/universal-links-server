@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head', { title: title, suffix: ' - Universal Links Admin' }) %>
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      text-align: center;
+      padding: 1rem;
+      background: var(--pico-card-background-color);
+      border-radius: var(--pico-border-radius);
+    }
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--pico-primary);
+    }
+    .stat-card .label {
+      color: var(--pico-muted-color);
+      font-size: 0.875rem;
+    }
+    .stat-card.success .value {
+      color: #01875f;
+    }
+    .stat-card.warning .value {
+      color: #f59e0b;
+    }
+    .chart-container {
+      height: 200px;
+      margin-bottom: 2rem;
+    }
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 100%;
+      padding: 1rem 0;
+    }
+    .bar {
+      flex: 1;
+      background: var(--pico-primary);
+      min-width: 8px;
+      border-radius: 2px 2px 0 0;
+      position: relative;
+    }
+    .bar.completed {
+      background: #01875f;
+    }
+    .bar:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--pico-card-background-color);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-badge.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .status-badge.completed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .status-badge.expired {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .milestone-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+    .milestone-badge.installed {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .milestone-badge.completed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .milestone-funnel {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .milestone-funnel-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .milestone-funnel-bar {
+      flex: 1;
+      height: 24px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .milestone-funnel-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+    .top-referrers {
+      display: grid;
+      gap: 0.5rem;
+    }
+    .referrer-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--pico-card-background-color);
+      border-radius: 4px;
+    }
+    .referrer-item .count {
+      display: flex;
+      gap: 1rem;
+    }
+    .referrer-item .count span {
+      font-size: 0.875rem;
+    }
+    .referrer-item .count .completed {
+      color: #01875f;
+    }
+    .referrer-item .count .total {
+      color: var(--pico-muted-color);
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <%- include('../partials/admin-nav', { backUrl: '/admin', backText: 'Dashboard', user: user }) %>
+
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <hgroup>
+        <h1>Referrals</h1>
+        <p>Track user-to-user referrals and conversions</p>
+      </hgroup>
+    </header>
+
+    <!-- Filters -->
+    <form method="GET" action="/admin/referrals" style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+      <select name="app_id" style="width: auto;">
+        <option value="">All Apps</option>
+        <% apps.forEach(app => { %>
+          <option value="<%= app.id %>" <%= selectedAppId === app.id ? 'selected' : '' %>><%= app.name %></option>
+        <% }); %>
+      </select>
+
+      <select name="days" style="width: auto;">
+        <option value="7" <%= selectedDays === 7 ? 'selected' : '' %>>Last 7 days</option>
+        <option value="30" <%= selectedDays === 30 ? 'selected' : '' %>>Last 30 days</option>
+        <option value="90" <%= selectedDays === 90 ? 'selected' : '' %>>Last 90 days</option>
+      </select>
+
+      <button type="submit" class="outline">Apply</button>
+    </form>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="value"><%= stats.total_referrals %></div>
+        <div class="label">Total Referrals</div>
+      </div>
+      <div class="stat-card success">
+        <div class="value"><%= stats.completed_referrals %></div>
+        <div class="label">Completed</div>
+      </div>
+      <div class="stat-card warning">
+        <div class="value"><%= stats.pending_referrals %></div>
+        <div class="label">Pending</div>
+      </div>
+      <div class="stat-card">
+        <div class="value"><%= stats.conversion_rate %>%</div>
+        <div class="label">Conversion Rate</div>
+      </div>
+    </div>
+
+    <!-- Daily Chart -->
+    <% if (stats.by_day.length > 0) { %>
+    <article>
+      <header>
+        <h3>Referrals Over Time</h3>
+      </header>
+      <div class="chart-container">
+        <div class="bar-chart">
+          <% const maxValue = Math.max(...stats.by_day.map(d => d.created), 1); %>
+          <% stats.by_day.forEach(day => { %>
+            <% const height = (day.created / maxValue) * 100; %>
+            <div class="bar" style="height: <%= height %>%;" data-tooltip="<%= day.date %>: <%= day.created %> created, <%= day.completed %> completed"></div>
+          <% }); %>
+        </div>
+      </div>
+      <p style="text-align: center; color: var(--pico-muted-color); font-size: 0.875rem;">
+        <%= stats.by_day.length > 0 ? stats.by_day[0].date : '' %> - <%= stats.by_day.length > 0 ? stats.by_day[stats.by_day.length - 1].date : '' %>
+      </p>
+    </article>
+    <% } %>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+      <!-- Top Referrers -->
+      <article>
+        <header>
+          <h3>Top Referrers</h3>
+        </header>
+        <% if (stats.top_referrers.length > 0) { %>
+          <div class="top-referrers">
+            <% stats.top_referrers.forEach((referrer, index) => { %>
+              <div class="referrer-item">
+                <span>
+                  <strong>#<%= index + 1 %></strong>
+                  <code style="margin-left: 0.5rem;"><%= referrer.referrer_id.substring(0, 20) %><%= referrer.referrer_id.length > 20 ? '...' : '' %></code>
+                </span>
+                <div class="count">
+                  <span class="completed"><%= referrer.completed %> converted</span>
+                  <span class="total"><%= referrer.total %> total</span>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <p style="color: var(--pico-muted-color);">No referrers yet</p>
+        <% } %>
+      </article>
+
+      <!-- Milestone Funnel -->
+      <article>
+        <header>
+          <h3>Milestone Funnel</h3>
+        </header>
+        <% if (stats.by_milestone && stats.by_milestone.length > 0) { %>
+          <div class="milestone-funnel">
+            <%
+              const milestoneOrder = ['pending', 'installed', 'signed_up', 'purchased', 'completed'];
+              const sortedMilestones = stats.by_milestone.sort((a, b) => {
+                const aIndex = milestoneOrder.indexOf(a.milestone);
+                const bIndex = milestoneOrder.indexOf(b.milestone);
+                if (aIndex === -1 && bIndex === -1) return a.milestone.localeCompare(b.milestone);
+                if (aIndex === -1) return 1;
+                if (bIndex === -1) return -1;
+                return aIndex - bIndex;
+              });
+              const maxCount = Math.max(...sortedMilestones.map(m => m.count), 1);
+              const colors = {
+                pending: '#6366f1',
+                installed: '#3b82f6',
+                signed_up: '#8b5cf6',
+                purchased: '#10b981',
+                completed: '#059669'
+              };
+            %>
+            <% sortedMilestones.forEach(item => { %>
+              <% const width = (item.count / maxCount) * 100; %>
+              <% const pct = stats.total_referrals > 0 ? Math.round((item.count / stats.total_referrals) * 100) : 0; %>
+              <div class="milestone-funnel-item">
+                <div class="milestone-funnel-bar">
+                  <div class="milestone-funnel-fill" style="width: <%= width %>%; background: <%= colors[item.milestone] || '#6366f1' %>;"></div>
+                </div>
+                <span style="min-width: 140px;"><%= item.count %> <%= item.milestone %> (<%= pct %>%)</span>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <p style="color: var(--pico-muted-color);">No milestone data yet</p>
+        <% } %>
+      </article>
+    </div>
+
+    <!-- Recent Referrals -->
+    <article>
+      <header>
+        <h3>Recent Referrals</h3>
+      </header>
+      <% if (stats.recent_referrals.length > 0) { %>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Created</th>
+                <th>App</th>
+                <th>Referrer</th>
+                <th>Code</th>
+                <th>Milestone</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% stats.recent_referrals.forEach(referral => { %>
+                <tr>
+                  <td><%= new Date(referral.created_at).toLocaleString() %></td>
+                  <td><%= referral.app_name %></td>
+                  <td><code><%= referral.referrer_id.substring(0, 15) %><%= referral.referrer_id.length > 15 ? '...' : '' %></code></td>
+                  <td><code><%= referral.referral_code %></code></td>
+                  <td>
+                    <span class="milestone-badge <%= referral.milestone %>"><%= referral.milestone || 'pending' %></span>
+                  </td>
+                  <td>
+                    <span class="status-badge <%= referral.status %>"><%= referral.status %></span>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p style="color: var(--pico-muted-color);">No referrals yet. Referrals will appear here when users create referral links via the API.</p>
+      <% } %>
+    </article>
+  </main>
+</body>
+</html>

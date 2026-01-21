@@ -51,6 +51,10 @@ router.post('/apps/new', (req: Request, res: Response) => {
     logo_url,
     primary_color,
     web_fallback_url,
+    referral_enabled,
+    referral_expiration_days,
+    referral_max_per_user,
+    referral_reward_milestone,
   } = req.body;
 
   // Validate required fields
@@ -103,8 +107,9 @@ router.post('/apps/new', (req: Request, res: Response) => {
       INSERT INTO apps (
         id, name, slug, domains, apple_team_id, apple_bundle_id, ios_app_store_url,
         android_package_name, android_sha256_fingerprints, android_play_store_url,
-        logo_url, primary_color, web_fallback_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        logo_url, primary_color, web_fallback_url,
+        referral_enabled, referral_expiration_days, referral_max_per_user, referral_reward_milestone
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       name.trim(),
@@ -119,6 +124,10 @@ router.post('/apps/new', (req: Request, res: Response) => {
       logo_url?.trim() || null,
       primary_color?.trim() || '#667eea',
       web_fallback_url?.trim() || null,
+      referral_enabled ? 1 : 0,
+      parseInt(referral_expiration_days, 10) || 30,
+      referral_max_per_user ? parseInt(referral_max_per_user, 10) : null,
+      referral_reward_milestone?.trim() || 'completed',
     );
 
     res.redirect('/admin');
@@ -171,6 +180,10 @@ router.post('/apps/:id', (req: Request, res: Response) => {
     logo_url,
     primary_color,
     web_fallback_url,
+    referral_enabled,
+    referral_expiration_days,
+    referral_max_per_user,
+    referral_reward_milestone,
   } = req.body;
 
   // Validate required fields
@@ -223,6 +236,7 @@ router.post('/apps/:id', (req: Request, res: Response) => {
         name = ?, slug = ?, domains = ?, apple_team_id = ?, apple_bundle_id = ?,
         ios_app_store_url = ?, android_package_name = ?, android_sha256_fingerprints = ?,
         android_play_store_url = ?, logo_url = ?, primary_color = ?, web_fallback_url = ?,
+        referral_enabled = ?, referral_expiration_days = ?, referral_max_per_user = ?, referral_reward_milestone = ?,
         updated_at = datetime('now')
       WHERE id = ?
     `).run(
@@ -238,6 +252,10 @@ router.post('/apps/:id', (req: Request, res: Response) => {
       logo_url?.trim() || null,
       primary_color?.trim() || '#667eea',
       web_fallback_url?.trim() || null,
+      referral_enabled ? 1 : 0,
+      parseInt(referral_expiration_days, 10) || 30,
+      referral_max_per_user ? parseInt(referral_max_per_user, 10) : null,
+      referral_reward_milestone?.trim() || 'completed',
       id,
     );
 
@@ -297,6 +315,10 @@ router.get('/apps/:id/export', (req: Request, res: Response) => {
       logo_url: app.logo_url,
       primary_color: app.primary_color,
       web_fallback_url: app.web_fallback_url,
+      referral_enabled: app.referral_enabled,
+      referral_expiration_days: app.referral_expiration_days,
+      referral_max_per_user: app.referral_max_per_user,
+      referral_reward_milestone: app.referral_reward_milestone,
     },
     routes: routes.map(r => ({
       prefix: r.prefix,
@@ -354,8 +376,9 @@ router.post('/apps/import', (req: Request, res: Response) => {
       INSERT INTO apps (
         id, name, slug, domains, apple_team_id, apple_bundle_id, ios_app_store_url,
         android_package_name, android_sha256_fingerprints, android_play_store_url,
-        logo_url, primary_color, web_fallback_url
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        logo_url, primary_color, web_fallback_url,
+        referral_enabled, referral_expiration_days, referral_max_per_user, referral_reward_milestone
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       appId,
       data.app.name,
@@ -370,6 +393,10 @@ router.post('/apps/import', (req: Request, res: Response) => {
       data.app.logo_url || null,
       data.app.primary_color || '#667eea',
       data.app.web_fallback_url || null,
+      data.app.referral_enabled ? 1 : 0,
+      data.app.referral_expiration_days || 30,
+      data.app.referral_max_per_user || null,
+      data.app.referral_reward_milestone || 'completed',
     );
 
     // Create routes

@@ -19,6 +19,7 @@ import { adminAppsRoutes } from './routes/admin/apps.js';
 import { adminRoutesRoutes } from './routes/admin/routes.js';
 import { adminTemplatesRoutes } from './routes/admin/templates.js';
 import { adminAnalyticsRoutes } from './routes/admin/analytics.js';
+import { adminReferralsRoutes } from './routes/admin/referrals.js';
 import { csrfToken, csrfProtection } from './middleware/csrf.js';
 import { requestLoggerWithFilter } from './middleware/logger.js';
 
@@ -120,6 +121,7 @@ app.use('/admin', adminAppsRoutes);
 app.use('/admin', adminRoutesRoutes);
 app.use('/admin/templates', adminTemplatesRoutes);
 app.use('/admin/analytics', adminAnalyticsRoutes);
+app.use('/admin/referrals', adminReferralsRoutes);
 
 // Public routes (need app resolution based on hostname)
 app.use('/.well-known', resolveApp, wellknownRoutes);

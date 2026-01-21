@@ -101,6 +101,33 @@
         </label>
       </fieldset>
 
+      <fieldset>
+        <legend>Referral Settings</legend>
+
+        <label>
+          <input type="checkbox" name="referral_enabled" value="1" <%= app?.referral_enabled ? 'checked' : '' %>>
+          Enable Referral System
+        </label>
+
+        <label>
+          Referral Expiration (days)
+          <input type="number" name="referral_expiration_days" value="<%= app?.referral_expiration_days || 30 %>" min="1" max="365">
+          <small>Pending referrals expire after this many days.</small>
+        </label>
+
+        <label>
+          Max Referrals Per User
+          <input type="number" name="referral_max_per_user" value="<%= app?.referral_max_per_user || '' %>" min="1">
+          <small>Leave empty for unlimited.</small>
+        </label>
+
+        <label>
+          Reward Milestone
+          <input type="text" name="referral_reward_milestone" value="<%= app?.referral_reward_milestone || 'completed' %>" placeholder="completed">
+          <small>Milestone that triggers referral reward (e.g., completed, purchased).</small>
+        </label>
+      </fieldset>
+
       <button type="submit"><%= app?.id ? 'Save Changes' : 'Create App' %></button>
     </form>
   </main>

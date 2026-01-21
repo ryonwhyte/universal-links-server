@@ -4,7 +4,8 @@ import { getRouteByPrefix } from '../../middleware/resolveApp.js';
 import { generateFingerprint } from '../../services/fingerprint.js';
 import { storeDeferredLink, buildPlayStoreUrl } from '../../services/deferred.js';
 import { cache, API_CACHE_TTL } from '../../services/cache.js';
-import { renderTemplate } from '../../services/templates.js';
+import { renderTemplate, getTemplateByName } from '../../services/templates.js';
+import { getReferralByCode } from '../../services/referrals.js';
 
 const router = Router();
 
@@ -73,6 +74,79 @@ function isValidApiUrl(urlString: string): boolean {
     return false;
   }
 }
+
+// Handle referral links: /ref/:code
+router.get('/ref/:code', async (req: Request, res: Response) => {
+  const { code } = req.params;
+  const app = req.app_config;
+
+  if (!app) {
+    res.status(404).render('public/error', {
+      title: 'Not Found',
+      message: 'App not found.',
+      app: null,
+    });
+    return;
+  }
+
+  // Look up the referral
+  const referral = getReferralByCode(code);
+
+  if (!referral || referral.app_id !== app.id) {
+    res.status(404).render('public/error', {
+      title: 'Invalid Referral',
+      message: 'This referral link is invalid or has expired.',
+      app,
+    });
+    return;
+  }
+
+  // Device detection
+  const userAgent = req.get('user-agent') || '';
+  const deviceInfo = parseUserAgent(userAgent);
+  const { isIOS, isAndroid, isMobile } = deviceInfo;
+
+  // Store deferred link with referral code
+  const fingerprint = generateFingerprint(req);
+  const deepLinkPath = `/referral/${code}`;
+  const { referrerToken } = storeDeferredLink(app.id, fingerprint, deepLinkPath);
+
+  // Build store URLs with referrer token
+  let playStoreUrl = app.android_play_store_url;
+  if (playStoreUrl) {
+    // Include referral code in Play Store referrer
+    playStoreUrl = buildPlayStoreUrl(playStoreUrl, `${referrerToken}&ref=${code}`);
+  }
+
+  // Render referral landing page
+  const context = {
+    title: `Join ${app.name}`,
+    app,
+    referral,
+    referralCode: code,
+    isIOS,
+    isAndroid,
+    isMobile,
+    playStoreUrl,
+    referrerToken,
+  };
+
+  // Try to render referral template, fall back to generic if not found
+  try {
+    const template = getTemplateByName('referral');
+    if (template && template.content) {
+      const ejs = await import('ejs');
+      const html = ejs.render(template.content, context);
+      res.send(html);
+    } else {
+      // Fallback to rendering a basic referral page
+      res.render('public/templates/referral', context);
+    }
+  } catch (error) {
+    console.error('Referral template error:', error);
+    res.render('public/templates/referral', context);
+  }
+});
 
 // Handle deep link routes: /:prefix/:token
 router.get('/:prefix/:token', async (req: Request, res: Response) => {

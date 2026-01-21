@@ -31,6 +31,9 @@ export const config = {
 
   // Deferred links
   deferredLinkTTL: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+
+  // API Authentication
+  apiKey: process.env.API_KEY || null,
 } as const;
 
 // Validate critical config on startup

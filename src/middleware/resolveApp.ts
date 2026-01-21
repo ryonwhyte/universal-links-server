@@ -15,6 +15,10 @@ export interface App {
   logo_url: string | null;
   primary_color: string;
   web_fallback_url: string | null;
+  referral_enabled: number;
+  referral_expiration_days: number;
+  referral_max_per_user: number | null;
+  referral_reward_milestone: string;
   created_at: string;
   updated_at: string;
 }

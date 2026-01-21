@@ -42,6 +42,27 @@ function runMigrations(): void {
   if (!routeColumns.some(col => col.name === 'web_fallback_url')) {
     db.exec('ALTER TABLE routes ADD COLUMN web_fallback_url TEXT');
   }
+
+  // Add milestone to referrals table if it doesn't exist
+  const referralColumns = db.prepare("PRAGMA table_info(referrals)").all() as { name: string }[];
+  if (referralColumns.length > 0 && !referralColumns.some(col => col.name === 'milestone')) {
+    db.exec("ALTER TABLE referrals ADD COLUMN milestone TEXT DEFAULT 'pending'");
+  }
+
+  // Add referral settings columns to apps table if they don't exist
+  const appColumns = db.prepare("PRAGMA table_info(apps)").all() as { name: string }[];
+  if (!appColumns.some(col => col.name === 'referral_enabled')) {
+    db.exec("ALTER TABLE apps ADD COLUMN referral_enabled INTEGER DEFAULT 0");
+  }
+  if (!appColumns.some(col => col.name === 'referral_expiration_days')) {
+    db.exec("ALTER TABLE apps ADD COLUMN referral_expiration_days INTEGER DEFAULT 30");
+  }
+  if (!appColumns.some(col => col.name === 'referral_max_per_user')) {
+    db.exec("ALTER TABLE apps ADD COLUMN referral_max_per_user INTEGER");
+  }
+  if (!appColumns.some(col => col.name === 'referral_reward_milestone')) {
+    db.exec("ALTER TABLE apps ADD COLUMN referral_reward_milestone TEXT DEFAULT 'completed'");
+  }
 }
 
 function createTables(): void {
@@ -61,6 +82,10 @@ function createTables(): void {
       logo_url TEXT,
       primary_color TEXT DEFAULT '#667eea',
       web_fallback_url TEXT,
+      referral_enabled INTEGER DEFAULT 0,
+      referral_expiration_days INTEGER DEFAULT 30,
+      referral_max_per_user INTEGER,
+      referral_reward_milestone TEXT DEFAULT 'completed',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -144,6 +169,25 @@ function createTables(): void {
       value TEXT NOT NULL,
       updated_at TEXT DEFAULT (datetime('now'))
     );
+
+    -- Referrals table (user-to-user referral tracking)
+    CREATE TABLE IF NOT EXISTS referrals (
+      id TEXT PRIMARY KEY,
+      app_id TEXT NOT NULL REFERENCES apps(id) ON DELETE CASCADE,
+      referrer_id TEXT NOT NULL,
+      referral_code TEXT UNIQUE NOT NULL,
+      referred_user_id TEXT,
+      status TEXT DEFAULT 'pending',
+      milestone TEXT DEFAULT 'pending',
+      created_at TEXT DEFAULT (datetime('now')),
+      completed_at TEXT,
+      metadata TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_referrals_app ON referrals(app_id);
+    CREATE INDEX IF NOT EXISTS idx_referrals_code ON referrals(referral_code);
+    CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id, app_id);
+    CREATE INDEX IF NOT EXISTS idx_referrals_status ON referrals(status);
   `);
 }
 

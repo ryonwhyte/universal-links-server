@@ -73,3 +73,21 @@ article>footer {
     border-radius: calc(var(--pico-border-radius) * 2);
     /* Original: var(--pico-border-radius) */
 }
+
+/* Fix anchor buttons to match button styling */
+a[role="button"],
+a[role="button"].outline,
+a[role="button"].secondary {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+    box-sizing: border-box;
+    line-height: var(--pico-line-height);
+    vertical-align: middle;
+}
+
+/* Ensure anchor buttons in flex containers align properly */
+div[style*="display: flex"] a[role="button"],
+.button-group a[role="button"] {
+    align-self: center;
+}
