@@ -85,6 +85,9 @@ function runMigrations(): void {
   if (!routeColumns.some(col => col.name === 'og_image')) {
     db.exec("ALTER TABLE routes ADD COLUMN og_image TEXT");
   }
+  if (!routeColumns.some(col => col.name === 'og_fetch_from_fallback')) {
+    db.exec("ALTER TABLE routes ADD COLUMN og_fetch_from_fallback INTEGER DEFAULT 0");
+  }
 
   // Add signal columns to deferred_links table if they don't exist
   const deferredColumns = db.prepare("PRAGMA table_info(deferred_links)").all() as { name: string }[];
@@ -102,6 +105,12 @@ function runMigrations(): void {
   }
   if (deferredColumns.length > 0 && !deferredColumns.some(col => col.name === 'screen_height')) {
     db.exec("ALTER TABLE deferred_links ADD COLUMN screen_height INTEGER");
+  }
+
+  // Create index for ip column (after migration ensures column exists)
+  const updatedDeferredCols = db.prepare("PRAGMA table_info(deferred_links)").all() as { name: string }[];
+  if (updatedDeferredCols.some(col => col.name === 'ip')) {
+    db.exec("CREATE INDEX IF NOT EXISTS idx_deferred_ip ON deferred_links(ip, app_id)");
   }
 }
 
@@ -146,6 +155,7 @@ function createTables(): void {
       og_title TEXT,
       og_description TEXT,
       og_image TEXT,
+      og_fetch_from_fallback INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now')),
       UNIQUE(app_id, prefix)
     );
@@ -170,7 +180,6 @@ function createTables(): void {
     CREATE INDEX IF NOT EXISTS idx_deferred_fingerprint ON deferred_links(fingerprint, app_id);
     CREATE INDEX IF NOT EXISTS idx_deferred_referrer ON deferred_links(referrer_token);
     CREATE INDEX IF NOT EXISTS idx_deferred_expires ON deferred_links(expires_at);
-    CREATE INDEX IF NOT EXISTS idx_deferred_ip ON deferred_links(ip, app_id);
 
     -- Admin users table
     CREATE TABLE IF NOT EXISTS users (

@@ -38,6 +38,7 @@ export interface Route {
   og_title: string | null;
   og_description: string | null;
   og_image: string | null;
+  og_fetch_from_fallback: number;
   created_at: string;
 }
 

@@ -64,6 +64,12 @@
         <small style="display: block; margin-bottom: 1rem;">Override app-level settings for this specific route.</small>
 
         <label>
+          <input type="checkbox" name="og_fetch_from_fallback" value="1" <%= route?.og_fetch_from_fallback ? 'checked' : '' %>>
+          Fetch preview from web fallback URL
+        </label>
+        <small style="display: block; margin-bottom: 1rem;">Dynamically fetch OG tags from the web fallback destination. Useful for routes with dynamic tokens.</small>
+
+        <label>
           Preview Title
           <input type="text" name="og_title" value="<%= route?.og_title || '' %>" placeholder="Leave blank to use app default">
         </label>

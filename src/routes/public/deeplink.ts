@@ -6,6 +6,7 @@ import { storeDeferredLink, buildPlayStoreUrl } from '../../services/deferred.js
 import { cache, API_CACHE_TTL } from '../../services/cache.js';
 import { renderTemplate, getTemplateByName } from '../../services/templates.js';
 import { getReferralByCode } from '../../services/referrals.js';
+import { fetchOgTags } from '../../services/ogFetcher.js';
 
 const router = Router();
 
@@ -283,9 +284,20 @@ router.get('/:prefix/:token', async (req: Request, res: Response) => {
   }
 
   // Calculate OG meta values (route-level overrides app-level)
-  const ogTitle = route.og_title || app.og_title || route.name;
-  const ogDescription = route.og_description || app.og_description || '';
-  const ogImage = route.og_image || app.og_image || app.logo_url || '';
+  let ogTitle = route.og_title || app.og_title || route.name;
+  let ogDescription = route.og_description || app.og_description || '';
+  let ogImage = route.og_image || app.og_image || app.logo_url || '';
+
+  // Fetch OG tags from web fallback URL if enabled
+  if (route.og_fetch_from_fallback && webFallbackUrl) {
+    const resolvedUrl = webFallbackUrl.replace('{token}', encodeURIComponent(token));
+    if (isValidApiUrl(resolvedUrl)) {
+      const fetchedOg = await fetchOgTags(resolvedUrl);
+      if (fetchedOg.title) ogTitle = fetchedOg.title;
+      if (fetchedOg.description) ogDescription = fetchedOg.description;
+      if (fetchedOg.image) ogImage = fetchedOg.image;
+    }
+  }
 
   // Render the template (hybrid: DB templates first, then code templates)
   const templateName = route.template || 'generic';
