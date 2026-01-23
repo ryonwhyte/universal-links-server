@@ -13,15 +13,15 @@
         <p>Manage Universal Links and App Links for your apps</p>
       </hgroup>
       <div style="display: flex; gap: 0.5rem;">
-        <button class="outline" onclick="window.location.href='/admin/apps/import'">Import</button>
-        <button onclick="window.location.href='/admin/apps/new'">+ Add App</button>
+        <a href="/admin/apps/import" role="button" class="outline">Import</a>
+        <a href="/admin/apps/new" role="button">+ Add App</a>
       </div>
     </header>
 
     <% if (apps.length === 0) { %>
       <article>
         <p>No apps configured yet.</p>
-        <button onclick="window.location.href='/admin/apps/new'">Create your first app</button>
+        <a href="/admin/apps/new" role="button">Create your first app</a>
       </article>
     <% } else { %>
       <% apps.forEach(app => { %>
@@ -53,9 +53,9 @@
 
           <footer>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <button class="outline" onclick="window.location.href='/admin/apps/<%= app.id %>'">Edit</button>
-              <button class="outline" onclick="window.location.href='/admin/apps/<%= app.id %>/routes'">Routes</button>
-              <button class="outline secondary" onclick="window.location.href='/admin/apps/<%= app.id %>/export'">Export</button>
+              <a href="/admin/apps/<%= app.id %>" role="button" class="outline">Edit</a>
+              <a href="/admin/apps/<%= app.id %>/routes" role="button" class="outline">Routes</a>
+              <a href="/admin/apps/<%= app.id %>/export" role="button" class="outline secondary">Export</a>
               <form method="POST" action="/admin/apps/<%= app.id %>/delete" style="display: inline;">
                 <%- include('../partials/csrf') %>
                 <button type="submit" class="outline secondary" onclick="return confirm('Delete this app?')">Delete</button>

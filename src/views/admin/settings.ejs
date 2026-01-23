@@ -28,7 +28,7 @@
 
       <p><strong>Email:</strong> <%= user.email %></p>
 
-      <button class="outline" onclick="window.location.href='/admin/change-password'">Change Password</button>
+      <a href="/admin/change-password" role="button" class="outline">Change Password</a>
     </article>
 
     <article>
@@ -97,7 +97,7 @@
         <h3>View Analytics</h3>
       </header>
       <p>View link tracking data in the built-in analytics dashboard.</p>
-      <button class="outline" onclick="window.location.href='/admin/analytics'">Open Dashboard</button>
+      <a href="/admin/analytics" role="button" class="outline">Open Dashboard</a>
     </article>
     <% } %>
   </main>

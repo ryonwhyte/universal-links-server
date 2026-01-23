@@ -13,9 +13,9 @@
         <p>Manage landing page templates</p>
       </hgroup>
       <div role="group">
-        <button onclick="window.location.href='/admin/templates/new'">+ New Template</button>
-        <button class="outline" onclick="window.location.href='/admin/templates/actions/export'">Export</button>
-        <button class="outline" onclick="window.location.href='/admin/templates/actions/import'">Import</button>
+        <a href="/admin/templates/new" role="button">+ New Template</a>
+        <a href="/admin/templates/actions/export" role="button" class="outline">Export</a>
+        <a href="/admin/templates/actions/import" role="button" class="outline">Import</a>
       </div>
     </header>
 
@@ -37,7 +37,7 @@
               <td><%= template.updated_at ? new Date(template.updated_at).toLocaleDateString() : '-' %></td>
               <td>
                 <div style="display: flex; gap: 0.5rem;">
-                  <button class="outline small" onclick="window.location.href='/admin/templates/<%= template.id %>'">Edit</button>
+                  <a href="/admin/templates/<%= template.id %>" role="button" class="outline small">Edit</a>
                   <form method="POST" action="/admin/templates/<%= template.id %>/delete" style="margin: 0;">
                     <%- include('../partials/csrf') %>
                     <button type="submit" class="outline secondary small" onclick="return confirm('Delete this template?')">Delete</button>
@@ -51,7 +51,7 @@
     <% } else { %>
       <article>
         <p>No custom templates yet.</p>
-        <button onclick="window.location.href='/admin/templates/new'">Create your first template</button>
+        <a href="/admin/templates/new" role="button">Create your first template</a>
       </article>
     <% } %>
 
@@ -71,7 +71,7 @@
             <td><code><%= template.name %></code></td>
             <td><%= template.description || '-' %></td>
             <td>
-              <button class="outline small" onclick="window.location.href='/admin/templates/<%= template.id %>'">View</button>
+              <a href="/admin/templates/<%= template.id %>" role="button" class="outline small">View</a>
             </td>
           </tr>
         <% }); %>
