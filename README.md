@@ -11,8 +11,11 @@ A self-hosted server for managing Universal Links (iOS) and App Links (Android) 
 - **Auto-Generated Well-Known Files** - Automatically serves `apple-app-site-association` and `assetlinks.json`
 - **Custom Landing Pages** - Configurable templates for users without the app installed
 - **Deferred Deep Linking** - Preserve deep link context through app installation
-  - Fingerprint matching for iOS (~70-80% accuracy)
+  - Multi-signal matching for iOS (IP + timezone + language + screen dimensions)
   - Install Referrer API for Android (~95% accuracy)
+- **User-to-User Referrals** - Built-in referral system with tracking and milestones
+- **Open Graph Previews** - Social media link previews with static or dynamic OG tags
+- **Route-Level Fallbacks** - Override app-level web fallback URLs per route
 - **Analytics Dashboard** - Track link opens and app installs per route
   - Internal analytics or Umami integration
   - Campaign tracking by link path
@@ -86,8 +89,12 @@ In the admin UI, create an app with:
 
 Routes define the URL patterns your app handles:
 - **Prefix** - URL path segment (e.g., `m` for `/m/TOKEN`)
+- **Name & Description** - Human-readable identifiers
 - **Template** - Landing page template for users without the app
 - **API Endpoint** - Optional API to fetch data for the landing page
+- **Web Fallback URL** - Override app-level fallback for desktop users
+- **OG Settings** - Social media preview (title, description, image)
+- **Dynamic OG Fetch** - Fetch OG tags from web fallback destination
 
 ### 3. Point Your Domain
 
@@ -112,11 +119,41 @@ For users who need to install the app first:
 3. App calls `/api/deferred/claim?token=REFERRER_TOKEN`
 4. Server returns the original deep link path
 
-**iOS:**
-1. Server generates fingerprint (IP + User Agent hash)
-2. After install, app generates same fingerprint
-3. App calls `/api/deferred/claim?fingerprint=HASH&app=BUNDLE_ID`
-4. Server returns matching deep link path
+**iOS (Multi-Signal Matching):**
+1. Landing page captures device signals (IP, timezone, language, screen size)
+2. Signals are sent to server via `/api/deferred/signals`
+3. After install, app sends same signals to `/api/deferred/claim`
+4. Server matches based on signal similarity within a 2-hour window
+5. Returns the original deep link path
+
+The multi-signal approach improves iOS matching accuracy by using multiple data points rather than relying solely on fingerprinting.
+
+### Referral System
+
+Built-in user-to-user referral tracking:
+
+1. **Generate Referral Links** - `POST /api/referrals` creates a unique referral code
+2. **Share Links** - Users share `https://go.yourapp.com/ref/CODE`
+3. **Track Conversions** - When referred users complete milestones, referrals are marked complete
+4. **Per-App Settings** - Configure per app:
+   - Enable/disable referrals
+   - Referral expiration (days)
+   - Max referrals per user
+   - Reward milestone trigger
+
+### Open Graph Previews
+
+Control how your links appear when shared on social media:
+
+**Static OG Tags:**
+- Set default OG title, description, and image at the app level
+- Override per route for specific link types
+
+**Dynamic OG Fetching:**
+- Enable "Fetch preview from web fallback URL" on a route
+- Server fetches OG tags from the web fallback destination
+- Useful for routes with dynamic content (e.g., product pages)
+- Results are cached for performance
 
 ## API Endpoints
 
@@ -127,8 +164,14 @@ For users who need to install the app first:
 | `GET /.well-known/apple-app-site-association` | iOS Universal Links config |
 | `GET /.well-known/assetlinks.json` | Android App Links config |
 | `GET /:prefix/:token` | Landing page for deep links |
+| `GET /ref/:code` | Referral landing page |
 | `GET /install` | Smart redirect to app store |
 | `GET /api/deferred/claim` | Claim deferred deep link |
+| `POST /api/deferred/signals` | Send device signals for iOS matching |
+| `POST /api/referrals` | Create a referral code |
+| `GET /api/referrals/:code` | Get referral by code |
+| `POST /api/referrals/:code/complete` | Mark referral as complete |
+| `POST /api/referrals/:code/milestone` | Update referral milestone |
 | `POST /api/path` | Track link opens from installed apps |
 | `GET /api/app/info` | Get app info by domain |
 | `GET /health` | Health check |
@@ -140,8 +183,11 @@ For users who need to install the app first:
 | `GET /admin` | Dashboard |
 | `GET/POST /admin/apps/new` | Create app |
 | `GET/POST /admin/apps/:id` | Edit app |
+| `GET /admin/apps/:id/export` | Export app config |
 | `POST /admin/apps/:id/delete` | Delete app |
 | `GET/POST /admin/apps/:id/routes` | Manage routes |
+| `GET /admin/apps/import` | Import app config |
+| `GET /admin/referrals` | View all referrals |
 | `GET /admin/analytics` | Analytics dashboard |
 | `GET /admin/templates` | Manage templates |
 | `GET /admin/settings` | User settings |
@@ -170,12 +216,17 @@ Templates define the landing page shown to users who don't have the app installe
 
 ### Available Template Variables
 
-- `app` - App config (name, logo, store URLs)
-- `route` - Route config (prefix, name)
+- `app` - App config (name, logo, store URLs, primary color)
+- `route` - Route config (prefix, name, description)
 - `token` - Token from URL
 - `data` - API response (if endpoint configured)
 - `deepLink` - Custom scheme deep link
 - `playStoreUrl` - Play Store URL with referrer
+- `referrerToken` - Referrer token for deferred linking
+- `ogTitle` - Open Graph title
+- `ogDescription` - Open Graph description
+- `ogImage` - Open Graph image URL
+- `isIOS` / `isAndroid` / `isMobile` - Device detection flags
 
 ### Example Template
 
