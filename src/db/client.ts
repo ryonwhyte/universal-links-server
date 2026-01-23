@@ -88,6 +88,9 @@ function runMigrations(): void {
   if (!routeColumns.some(col => col.name === 'og_fetch_from_fallback')) {
     db.exec("ALTER TABLE routes ADD COLUMN og_fetch_from_fallback INTEGER DEFAULT 0");
   }
+  if (!routeColumns.some(col => col.name === 'description')) {
+    db.exec("ALTER TABLE routes ADD COLUMN description TEXT");
+  }
 
   // Add signal columns to deferred_links table if they don't exist
   const deferredColumns = db.prepare("PRAGMA table_info(deferred_links)").all() as { name: string }[];
@@ -152,6 +155,7 @@ function createTables(): void {
       api_endpoint TEXT,
       universal_link_enabled INTEGER DEFAULT 1,
       web_fallback_url TEXT,
+      description TEXT,
       og_title TEXT,
       og_description TEXT,
       og_image TEXT,

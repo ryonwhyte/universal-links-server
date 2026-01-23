@@ -30,6 +30,11 @@
       </label>
 
       <label>
+        Description
+        <input type="text" name="description" value="<%= route?.description || '' %>" placeholder="Optional description for this route">
+      </label>
+
+      <label>
         Template
         <select name="template">
           <% templates.forEach(t => { %>

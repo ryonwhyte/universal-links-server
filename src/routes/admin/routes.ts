@@ -73,7 +73,7 @@ router.get('/apps/:id/routes/new', (req: Request, res: Response) => {
 // Create route
 router.post('/apps/:id/routes/new', (req: Request, res: Response) => {
   const { id } = req.params;
-  const { prefix, name, template, api_endpoint, universal_link_enabled, web_fallback_url, og_title, og_description, og_image, og_fetch_from_fallback } = req.body;
+  const { prefix, name, description, template, api_endpoint, universal_link_enabled, web_fallback_url, og_title, og_description, og_image, og_fetch_from_fallback } = req.body;
 
   const db = getDb();
   const app = db.prepare('SELECT * FROM apps WHERE id = ?').get(id) as App | undefined;
@@ -132,13 +132,14 @@ router.post('/apps/:id/routes/new', (req: Request, res: Response) => {
     // Insert route
     const routeId = generateId();
     db.prepare(`
-      INSERT INTO routes (id, app_id, prefix, name, template, api_endpoint, universal_link_enabled, web_fallback_url, og_title, og_description, og_image, og_fetch_from_fallback)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO routes (id, app_id, prefix, name, description, template, api_endpoint, universal_link_enabled, web_fallback_url, og_title, og_description, og_image, og_fetch_from_fallback)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       routeId,
       id,
       cleanPrefix,
       name.trim(),
+      description?.trim() || null,
       template?.trim() || 'generic',
       api_endpoint?.trim() || null,
       universal_link_enabled === 'on' || universal_link_enabled === '1' ? 1 : 0,
@@ -194,7 +195,7 @@ router.get('/apps/:appId/routes/:routeId', (req: Request, res: Response) => {
 // Update route
 router.post('/apps/:appId/routes/:routeId', (req: Request, res: Response) => {
   const { appId, routeId } = req.params;
-  const { prefix, name, template, api_endpoint, universal_link_enabled, web_fallback_url, og_title, og_description, og_image, og_fetch_from_fallback } = req.body;
+  const { prefix, name, description, template, api_endpoint, universal_link_enabled, web_fallback_url, og_title, og_description, og_image, og_fetch_from_fallback } = req.body;
 
   const db = getDb();
   const app = db.prepare('SELECT * FROM apps WHERE id = ?').get(appId) as App | undefined;
@@ -252,12 +253,13 @@ router.post('/apps/:appId/routes/:routeId', (req: Request, res: Response) => {
     // Update route
     db.prepare(`
       UPDATE routes SET
-        prefix = ?, name = ?, template = ?, api_endpoint = ?, universal_link_enabled = ?, web_fallback_url = ?,
+        prefix = ?, name = ?, description = ?, template = ?, api_endpoint = ?, universal_link_enabled = ?, web_fallback_url = ?,
         og_title = ?, og_description = ?, og_image = ?, og_fetch_from_fallback = ?
       WHERE id = ? AND app_id = ?
     `).run(
       cleanPrefix,
       name.trim(),
+      description?.trim() || null,
       template?.trim() || 'generic',
       api_endpoint?.trim() || null,
       universal_link_enabled === 'on' || universal_link_enabled === '1' ? 1 : 0,

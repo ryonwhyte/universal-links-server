@@ -31,6 +31,7 @@ export interface Route {
   app_id: string;
   prefix: string;
   name: string;
+  description: string | null;
   template: string;
   api_endpoint: string | null;
   universal_link_enabled: number;
