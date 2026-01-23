@@ -31,6 +31,7 @@ export const config = {
 
   // Deferred links
   deferredLinkTTL: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+  deferredMatchWindow: parseInt(process.env.DEFERRED_MATCH_WINDOW || '7200000', 10), // 2 hours in milliseconds
 
   // API Authentication
   apiKey: process.env.API_KEY || null,

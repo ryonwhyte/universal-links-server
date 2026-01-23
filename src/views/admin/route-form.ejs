@@ -59,6 +59,26 @@
         <small>Include this route in iOS/Android app link configuration.</small>
       </fieldset>
 
+      <fieldset>
+        <legend>Social Media Preview (Optional)</legend>
+        <small style="display: block; margin-bottom: 1rem;">Override app-level settings for this specific route.</small>
+
+        <label>
+          Preview Title
+          <input type="text" name="og_title" value="<%= route?.og_title || '' %>" placeholder="Leave blank to use app default">
+        </label>
+
+        <label>
+          Preview Description
+          <textarea name="og_description" placeholder="Leave blank to use app default"><%= route?.og_description || '' %></textarea>
+        </label>
+
+        <label>
+          Preview Image URL
+          <input type="url" name="og_image" value="<%= route?.og_image || '' %>" placeholder="Leave blank to use app default">
+        </label>
+      </fieldset>
+
       <button type="submit"><%= route?.id ? 'Save Changes' : 'Create Route' %></button>
     </form>
   </main>

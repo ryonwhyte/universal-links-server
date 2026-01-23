@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import { getDb, generateId } from '../db/client.js';
 import { config } from '../config.js';
+import { calculateSignalScore, type DeviceSignals } from './fingerprint.js';
 
 interface DeferredLink {
   id: string;
@@ -11,6 +12,11 @@ interface DeferredLink {
   created_at: string;
   expires_at: string;
   claimed: number;
+  ip: string | null;
+  timezone: string | null;
+  language: string | null;
+  screen_width: number | null;
+  screen_height: number | null;
 }
 
 /**
@@ -20,6 +26,7 @@ export function storeDeferredLink(
   appId: string,
   fingerprint: string,
   deepLinkPath: string,
+  ip?: string,
 ): { id: string; referrerToken: string } {
   const db = getDb();
 
@@ -30,11 +37,39 @@ export function storeDeferredLink(
   const expiresAt = new Date(Date.now() + config.deferredLinkTTL).toISOString();
 
   db.prepare(`
-    INSERT INTO deferred_links (id, app_id, fingerprint, deep_link_path, referrer_token, expires_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, appId, fingerprint, deepLinkPath, referrerToken, expiresAt);
+    INSERT INTO deferred_links (id, app_id, fingerprint, deep_link_path, referrer_token, expires_at, ip)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(id, appId, fingerprint, deepLinkPath, referrerToken, expiresAt, ip || null);
 
   return { id, referrerToken };
+}
+
+/**
+ * Update a deferred link with client-side signals (timezone, language, screen).
+ * Called after the landing page JavaScript captures these values.
+ */
+export function updateDeferredLinkSignals(
+  referrerToken: string,
+  signals: Partial<DeviceSignals>
+): boolean {
+  const db = getDb();
+
+  const result = db.prepare(`
+    UPDATE deferred_links
+    SET timezone = COALESCE(?, timezone),
+        language = COALESCE(?, language),
+        screen_width = COALESCE(?, screen_width),
+        screen_height = COALESCE(?, screen_height)
+    WHERE referrer_token = ? AND claimed = 0
+  `).run(
+    signals.timezone || null,
+    signals.language || null,
+    signals.screen_width || null,
+    signals.screen_height || null,
+    referrerToken
+  );
+
+  return result.changes > 0;
 }
 
 /**
@@ -62,8 +97,9 @@ export function claimByToken(token: string): DeferredLink | null {
 }
 
 /**
- * Claim a deferred link by fingerprint (iOS method).
+ * Claim a deferred link by fingerprint (iOS method - legacy).
  * Returns the most recent matching link.
+ * @deprecated Use claimBySignals() for better iOS matching
  */
 export function claimByFingerprint(fingerprint: string, appId: string): DeferredLink | null {
   const db = getDb();
@@ -88,6 +124,75 @@ export function claimByFingerprint(fingerprint: string, appId: string): Deferred
   db.prepare('UPDATE deferred_links SET claimed = 1 WHERE id = ?').run(link.id);
 
   return link;
+}
+
+/**
+ * Claim a deferred link by multi-signal matching (improved iOS method).
+ * Matches on IP within a time window, then scores other signals.
+ *
+ * @param signals - Device signals from the claiming app
+ * @param appId - App ID to match
+ * @param matchWindowMs - Time window for matching (default from config)
+ * @param minScore - Minimum signal score required (0-4, default 2)
+ */
+export function claimBySignals(
+  signals: DeviceSignals,
+  appId: string,
+  matchWindowMs?: number,
+  minScore: number = 2
+): DeferredLink | null {
+  const db = getDb();
+  const windowMs = matchWindowMs || config.deferredMatchWindow || 7200000; // Default 2 hours
+  const windowMinutes = Math.floor(windowMs / 60000);
+
+  // Find candidates: same IP, within time window, not claimed, not expired
+  const candidates = db.prepare(`
+    SELECT * FROM deferred_links
+    WHERE ip = ?
+      AND app_id = ?
+      AND claimed = 0
+      AND expires_at > datetime('now')
+      AND created_at > datetime('now', '-' || ? || ' minutes')
+    ORDER BY created_at DESC
+  `).all(signals.ip, appId, windowMinutes) as DeferredLink[];
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  // Score each candidate and find the best match
+  let bestMatch: DeferredLink | null = null;
+  let bestScore = -1;
+
+  for (const link of candidates) {
+    const storedSignals: DeviceSignals = {
+      ip: link.ip || '',
+      timezone: link.timezone || undefined,
+      language: link.language || undefined,
+      screen_width: link.screen_width || undefined,
+      screen_height: link.screen_height || undefined,
+    };
+
+    const score = calculateSignalScore(storedSignals, signals);
+
+    // Require minimum score for a confident match
+    if (score >= minScore && score > bestScore) {
+      bestScore = score;
+      bestMatch = link;
+    }
+  }
+
+  // If we found a confident match, claim it
+  if (bestMatch) {
+    db.prepare('UPDATE deferred_links SET claimed = 1 WHERE id = ?').run(bestMatch.id);
+    return bestMatch;
+  }
+
+  // Fallback: if no confident match but we have candidates, return the most recent
+  // This is lower confidence but better than no match at all
+  const fallback = candidates[0];
+  db.prepare('UPDATE deferred_links SET claimed = 1 WHERE id = ?').run(fallback.id);
+  return fallback;
 }
 
 /**

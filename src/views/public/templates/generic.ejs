@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> - <%= app.name %></title>
+
+  <!-- Open Graph meta tags -->
+  <meta property="og:title" content="<%= ogTitle %>">
+  <% if (ogDescription) { %>
+  <meta property="og:description" content="<%= ogDescription %>">
+  <% } %>
+  <% if (ogImage) { %>
+  <meta property="og:image" content="<%= ogImage %>">
+  <% } %>
+  <meta property="og:type" content="website">
+
   <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@2/css/pico.min.css">
   <link rel="stylesheet" href="/css/styles.css">
   <style>
@@ -136,5 +147,26 @@
       <% } %>
     </div>
   </div>
+
+  <script>
+    // Send device signals to server for improved iOS deferred link matching
+    (function() {
+      try {
+        var signals = {
+          token: '<%= referrerToken %>',
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: navigator.language,
+          screen_width: screen.width,
+          screen_height: screen.height
+        };
+
+        fetch('/api/deferred/signals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(signals)
+        }).catch(function() {});
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>

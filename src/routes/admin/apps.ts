@@ -55,6 +55,9 @@ router.post('/apps/new', (req: Request, res: Response) => {
     referral_expiration_days,
     referral_max_per_user,
     referral_reward_milestone,
+    og_title,
+    og_description,
+    og_image,
   } = req.body;
 
   // Validate required fields
@@ -108,8 +111,9 @@ router.post('/apps/new', (req: Request, res: Response) => {
         id, name, slug, domains, apple_team_id, apple_bundle_id, ios_app_store_url,
         android_package_name, android_sha256_fingerprints, android_play_store_url,
         logo_url, primary_color, web_fallback_url,
-        referral_enabled, referral_expiration_days, referral_max_per_user, referral_reward_milestone
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        referral_enabled, referral_expiration_days, referral_max_per_user, referral_reward_milestone,
+        og_title, og_description, og_image
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       name.trim(),
@@ -128,6 +132,9 @@ router.post('/apps/new', (req: Request, res: Response) => {
       parseInt(referral_expiration_days, 10) || 30,
       referral_max_per_user ? parseInt(referral_max_per_user, 10) : null,
       referral_reward_milestone?.trim() || 'completed',
+      og_title?.trim() || null,
+      og_description?.trim() || null,
+      og_image?.trim() || null,
     );
 
     res.redirect('/admin');
@@ -184,6 +191,9 @@ router.post('/apps/:id', (req: Request, res: Response) => {
     referral_expiration_days,
     referral_max_per_user,
     referral_reward_milestone,
+    og_title,
+    og_description,
+    og_image,
   } = req.body;
 
   // Validate required fields
@@ -237,6 +247,7 @@ router.post('/apps/:id', (req: Request, res: Response) => {
         ios_app_store_url = ?, android_package_name = ?, android_sha256_fingerprints = ?,
         android_play_store_url = ?, logo_url = ?, primary_color = ?, web_fallback_url = ?,
         referral_enabled = ?, referral_expiration_days = ?, referral_max_per_user = ?, referral_reward_milestone = ?,
+        og_title = ?, og_description = ?, og_image = ?,
         updated_at = datetime('now')
       WHERE id = ?
     `).run(
@@ -256,6 +267,9 @@ router.post('/apps/:id', (req: Request, res: Response) => {
       parseInt(referral_expiration_days, 10) || 30,
       referral_max_per_user ? parseInt(referral_max_per_user, 10) : null,
       referral_reward_milestone?.trim() || 'completed',
+      og_title?.trim() || null,
+      og_description?.trim() || null,
+      og_image?.trim() || null,
       id,
     );
 
@@ -319,6 +333,9 @@ router.get('/apps/:id/export', (req: Request, res: Response) => {
       referral_expiration_days: app.referral_expiration_days,
       referral_max_per_user: app.referral_max_per_user,
       referral_reward_milestone: app.referral_reward_milestone,
+      og_title: app.og_title,
+      og_description: app.og_description,
+      og_image: app.og_image,
     },
     routes: routes.map(r => ({
       prefix: r.prefix,
@@ -327,6 +344,9 @@ router.get('/apps/:id/export', (req: Request, res: Response) => {
       api_endpoint: r.api_endpoint,
       universal_link_enabled: r.universal_link_enabled,
       web_fallback_url: r.web_fallback_url,
+      og_title: r.og_title,
+      og_description: r.og_description,
+      og_image: r.og_image,
     })),
   };
 
@@ -377,8 +397,9 @@ router.post('/apps/import', (req: Request, res: Response) => {
         id, name, slug, domains, apple_team_id, apple_bundle_id, ios_app_store_url,
         android_package_name, android_sha256_fingerprints, android_play_store_url,
         logo_url, primary_color, web_fallback_url,
-        referral_enabled, referral_expiration_days, referral_max_per_user, referral_reward_milestone
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        referral_enabled, referral_expiration_days, referral_max_per_user, referral_reward_milestone,
+        og_title, og_description, og_image
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       appId,
       data.app.name,
@@ -397,13 +418,16 @@ router.post('/apps/import', (req: Request, res: Response) => {
       data.app.referral_expiration_days || 30,
       data.app.referral_max_per_user || null,
       data.app.referral_reward_milestone || 'completed',
+      data.app.og_title || null,
+      data.app.og_description || null,
+      data.app.og_image || null,
     );
 
     // Create routes
     if (data.routes && Array.isArray(data.routes)) {
       const insertRoute = db.prepare(`
-        INSERT INTO routes (id, app_id, prefix, name, template, api_endpoint, universal_link_enabled, web_fallback_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO routes (id, app_id, prefix, name, template, api_endpoint, universal_link_enabled, web_fallback_url, og_title, og_description, og_image)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       for (const route of data.routes) {
@@ -417,6 +441,9 @@ router.post('/apps/import', (req: Request, res: Response) => {
             route.api_endpoint || null,
             route.universal_link_enabled !== undefined ? (route.universal_link_enabled ? 1 : 0) : 1,
             route.web_fallback_url || null,
+            route.og_title || null,
+            route.og_description || null,
+            route.og_image || null,
           );
         }
       }

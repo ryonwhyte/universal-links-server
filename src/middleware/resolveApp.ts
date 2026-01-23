@@ -19,6 +19,9 @@ export interface App {
   referral_expiration_days: number;
   referral_max_per_user: number | null;
   referral_reward_milestone: string;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -32,6 +35,9 @@ export interface Route {
   api_endpoint: string | null;
   universal_link_enabled: number;
   web_fallback_url: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
   created_at: string;
 }
 

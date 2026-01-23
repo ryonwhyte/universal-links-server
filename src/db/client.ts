@@ -63,6 +63,46 @@ function runMigrations(): void {
   if (!appColumns.some(col => col.name === 'referral_reward_milestone')) {
     db.exec("ALTER TABLE apps ADD COLUMN referral_reward_milestone TEXT DEFAULT 'completed'");
   }
+
+  // Add OG meta tag columns to apps table if they don't exist
+  if (!appColumns.some(col => col.name === 'og_title')) {
+    db.exec("ALTER TABLE apps ADD COLUMN og_title TEXT");
+  }
+  if (!appColumns.some(col => col.name === 'og_description')) {
+    db.exec("ALTER TABLE apps ADD COLUMN og_description TEXT");
+  }
+  if (!appColumns.some(col => col.name === 'og_image')) {
+    db.exec("ALTER TABLE apps ADD COLUMN og_image TEXT");
+  }
+
+  // Add OG meta tag columns to routes table if they don't exist
+  if (!routeColumns.some(col => col.name === 'og_title')) {
+    db.exec("ALTER TABLE routes ADD COLUMN og_title TEXT");
+  }
+  if (!routeColumns.some(col => col.name === 'og_description')) {
+    db.exec("ALTER TABLE routes ADD COLUMN og_description TEXT");
+  }
+  if (!routeColumns.some(col => col.name === 'og_image')) {
+    db.exec("ALTER TABLE routes ADD COLUMN og_image TEXT");
+  }
+
+  // Add signal columns to deferred_links table if they don't exist
+  const deferredColumns = db.prepare("PRAGMA table_info(deferred_links)").all() as { name: string }[];
+  if (deferredColumns.length > 0 && !deferredColumns.some(col => col.name === 'ip')) {
+    db.exec("ALTER TABLE deferred_links ADD COLUMN ip TEXT");
+  }
+  if (deferredColumns.length > 0 && !deferredColumns.some(col => col.name === 'timezone')) {
+    db.exec("ALTER TABLE deferred_links ADD COLUMN timezone TEXT");
+  }
+  if (deferredColumns.length > 0 && !deferredColumns.some(col => col.name === 'language')) {
+    db.exec("ALTER TABLE deferred_links ADD COLUMN language TEXT");
+  }
+  if (deferredColumns.length > 0 && !deferredColumns.some(col => col.name === 'screen_width')) {
+    db.exec("ALTER TABLE deferred_links ADD COLUMN screen_width INTEGER");
+  }
+  if (deferredColumns.length > 0 && !deferredColumns.some(col => col.name === 'screen_height')) {
+    db.exec("ALTER TABLE deferred_links ADD COLUMN screen_height INTEGER");
+  }
 }
 
 function createTables(): void {
@@ -86,6 +126,9 @@ function createTables(): void {
       referral_expiration_days INTEGER DEFAULT 30,
       referral_max_per_user INTEGER,
       referral_reward_milestone TEXT DEFAULT 'completed',
+      og_title TEXT,
+      og_description TEXT,
+      og_image TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
@@ -100,6 +143,9 @@ function createTables(): void {
       api_endpoint TEXT,
       universal_link_enabled INTEGER DEFAULT 1,
       web_fallback_url TEXT,
+      og_title TEXT,
+      og_description TEXT,
+      og_image TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       UNIQUE(app_id, prefix)
     );
@@ -113,12 +159,18 @@ function createTables(): void {
       referrer_token TEXT UNIQUE,
       created_at TEXT DEFAULT (datetime('now')),
       expires_at TEXT NOT NULL,
-      claimed INTEGER DEFAULT 0
+      claimed INTEGER DEFAULT 0,
+      ip TEXT,
+      timezone TEXT,
+      language TEXT,
+      screen_width INTEGER,
+      screen_height INTEGER
     );
 
     CREATE INDEX IF NOT EXISTS idx_deferred_fingerprint ON deferred_links(fingerprint, app_id);
     CREATE INDEX IF NOT EXISTS idx_deferred_referrer ON deferred_links(referrer_token);
     CREATE INDEX IF NOT EXISTS idx_deferred_expires ON deferred_links(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_deferred_ip ON deferred_links(ip, app_id);
 
     -- Admin users table
     CREATE TABLE IF NOT EXISTS users (

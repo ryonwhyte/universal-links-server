@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { UAParser } from 'ua-parser-js';
 import { getRouteByPrefix } from '../../middleware/resolveApp.js';
-import { generateFingerprint } from '../../services/fingerprint.js';
+import { generateFingerprint, getIp } from '../../services/fingerprint.js';
 import { storeDeferredLink, buildPlayStoreUrl } from '../../services/deferred.js';
 import { cache, API_CACHE_TTL } from '../../services/cache.js';
 import { renderTemplate, getTemplateByName } from '../../services/templates.js';
@@ -108,8 +108,9 @@ router.get('/ref/:code', async (req: Request, res: Response) => {
 
   // Store deferred link with referral code
   const fingerprint = generateFingerprint(req);
+  const ip = getIp(req);
   const deepLinkPath = `/referral/${code}`;
-  const { referrerToken } = storeDeferredLink(app.id, fingerprint, deepLinkPath);
+  const { referrerToken } = storeDeferredLink(app.id, fingerprint, deepLinkPath, ip);
 
   // Build store URLs with referrer token
   let playStoreUrl = app.android_play_store_url;
@@ -117,6 +118,11 @@ router.get('/ref/:code', async (req: Request, res: Response) => {
     // Include referral code in Play Store referrer
     playStoreUrl = buildPlayStoreUrl(playStoreUrl, `${referrerToken}&ref=${code}`);
   }
+
+  // Calculate OG meta values (app-level only for referrals)
+  const ogTitle = app.og_title || `Join ${app.name}`;
+  const ogDescription = app.og_description || `You've been invited to join ${app.name}!`;
+  const ogImage = app.og_image || app.logo_url || '';
 
   // Render referral landing page
   const context = {
@@ -129,6 +135,9 @@ router.get('/ref/:code', async (req: Request, res: Response) => {
     isMobile,
     playStoreUrl,
     referrerToken,
+    ogTitle,
+    ogDescription,
+    ogImage,
   };
 
   // Try to render referral template, fall back to generic if not found
@@ -192,8 +201,9 @@ router.get('/:prefix/:token', async (req: Request, res: Response) => {
 
   // Generate fingerprint and store deferred link
   const fingerprint = generateFingerprint(req);
+  const ip = getIp(req);
   const deepLinkPath = `/${prefix}/${token}`;
-  const { referrerToken } = storeDeferredLink(app.id, fingerprint, deepLinkPath);
+  const { referrerToken } = storeDeferredLink(app.id, fingerprint, deepLinkPath, ip);
 
   // Fetch data from API if configured (with caching)
   let apiData = null;
@@ -272,6 +282,11 @@ router.get('/:prefix/:token', async (req: Request, res: Response) => {
     return;
   }
 
+  // Calculate OG meta values (route-level overrides app-level)
+  const ogTitle = route.og_title || app.og_title || route.name;
+  const ogDescription = route.og_description || app.og_description || '';
+  const ogImage = route.og_image || app.og_image || app.logo_url || '';
+
   // Render the template (hybrid: DB templates first, then code templates)
   const templateName = route.template || 'generic';
   const context = {
@@ -283,6 +298,9 @@ router.get('/:prefix/:token', async (req: Request, res: Response) => {
     deepLink: `${app.slug}://${prefix}/${token}`, // Custom scheme deep link
     playStoreUrl,
     referrerToken,
+    ogTitle,
+    ogDescription,
+    ogImage,
   };
 
   try {

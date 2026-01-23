@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { getDb } from '../../db/client.js';
-import { claimByToken, claimByFingerprint, cleanupDeferredLinks } from '../../services/deferred.js';
+import { claimByToken, claimByFingerprint, claimBySignals, cleanupDeferredLinks, updateDeferredLinkSignals } from '../../services/deferred.js';
 import { generateFingerprintFromValues, getIp } from '../../services/fingerprint.js';
 import { logEvent, type Platform, type Source } from '../../services/analytics.js';
 import { createReferral, getReferralByCode, completeReferral, getReferrerIdByCode, updateMilestone, countActiveReferrals } from '../../services/referrals.js';
@@ -14,11 +14,11 @@ const router = Router();
  *
  * Methods:
  * 1. By referrer token (Android): GET /api/deferred/claim?token=xxx
- * 2. By fingerprint (iOS): GET /api/deferred/claim?fingerprint=xxx
- *    Or let server generate fingerprint from request
+ * 2. By signals (iOS - recommended): GET /api/deferred/claim?timezone=X&language=X&screen_width=X&screen_height=X
+ * 3. By fingerprint (iOS - legacy): GET /api/deferred/claim?fingerprint=xxx
  */
 router.get('/deferred/claim', (req: Request, res: Response) => {
-  const { token, fingerprint: providedFingerprint } = req.query;
+  const { token, fingerprint: providedFingerprint, timezone, language, screen_width, screen_height } = req.query;
   const app = req.app_config;
 
   if (!app) {
@@ -70,15 +70,67 @@ router.get('/deferred/claim', (req: Request, res: Response) => {
     return;
   }
 
-  // Method 2: Claim by fingerprint (iOS)
-  // First try provided fingerprint, then generate from request
+  // Method 2: Claim by signals (iOS - recommended)
+  // Uses IP from request + client signals for fuzzy matching
+  const ip = getIp(req);
+  const hasSignals = timezone || language || screen_width || screen_height;
+
+  if (hasSignals) {
+    const signals = {
+      ip,
+      timezone: typeof timezone === 'string' ? timezone : undefined,
+      language: typeof language === 'string' ? language : undefined,
+      screen_width: typeof screen_width === 'string' ? parseInt(screen_width, 10) : undefined,
+      screen_height: typeof screen_height === 'string' ? parseInt(screen_height, 10) : undefined,
+    };
+
+    const link = claimBySignals(signals, app.id);
+
+    if (!link) {
+      res.status(404).json({
+        success: false,
+        error: 'Link not found or expired',
+      });
+      return;
+    }
+
+    // Log install event
+    logEvent({
+      app_id: app.id,
+      event_type: 'install',
+      deep_link: link.deep_link_path,
+      platform: 'ios',
+      source: 'deferred',
+    });
+
+    // Auto-detect referral links and include referrer_id
+    let referrerId: string | null = null;
+    let referralCode: string | null = null;
+    const referralMatch = link.deep_link_path.match(/^\/referral\/([A-Z0-9]+)$/i);
+    if (referralMatch) {
+      referralCode = referralMatch[1];
+      referrerId = getReferrerIdByCode(referralCode);
+      if (referralCode) {
+        updateMilestone(referralCode, 'installed');
+      }
+    }
+
+    res.json({
+      success: true,
+      path: link.deep_link_path,
+      ...(referrerId && { referrer_id: referrerId }),
+      ...(referralCode && { referral_code: referralCode }),
+    });
+    return;
+  }
+
+  // Method 3: Claim by fingerprint (iOS - legacy, less reliable)
   let fingerprint: string;
 
   if (typeof providedFingerprint === 'string' && providedFingerprint.length > 0) {
     fingerprint = providedFingerprint;
   } else {
     // Generate fingerprint from request (less reliable but can work)
-    const ip = getIp(req);
     const userAgent = req.get('user-agent') || '';
     fingerprint = generateFingerprintFromValues(ip, userAgent);
   }
@@ -122,6 +174,42 @@ router.get('/deferred/claim', (req: Request, res: Response) => {
     ...(referrerId && { referrer_id: referrerId }),
     ...(referralCode && { referral_code: referralCode }),
   });
+});
+
+/**
+ * Update deferred link with client-side signals.
+ * Called by landing page JavaScript after capturing device info.
+ *
+ * POST /api/deferred/signals
+ * {
+ *   "token": "referrerToken123",
+ *   "timezone": "America/New_York",
+ *   "language": "en-US",
+ *   "screen_width": 390,
+ *   "screen_height": 844
+ * }
+ */
+router.post('/deferred/signals', (req: Request, res: Response) => {
+  const { token, timezone, language, screen_width, screen_height } = req.body;
+
+  if (!token || typeof token !== 'string') {
+    res.status(400).json({ success: false, error: 'token is required' });
+    return;
+  }
+
+  const updated = updateDeferredLinkSignals(token, {
+    timezone: typeof timezone === 'string' ? timezone : undefined,
+    language: typeof language === 'string' ? language : undefined,
+    screen_width: typeof screen_width === 'number' ? screen_width : undefined,
+    screen_height: typeof screen_height === 'number' ? screen_height : undefined,
+  });
+
+  if (!updated) {
+    res.status(404).json({ success: false, error: 'Link not found or already claimed' });
+    return;
+  }
+
+  res.json({ success: true });
 });
 
 /**
