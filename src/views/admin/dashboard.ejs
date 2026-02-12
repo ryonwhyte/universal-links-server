@@ -51,6 +51,14 @@
             <% } %>
           </p>
 
+          <% const installDomain = app.domains.split(',')[0].trim(); %>
+          <p style="display: flex; align-items: center; gap: 0.25rem;">
+            <small>Install link: <a href="https://<%= installDomain %>/install" target="_blank">https://<%= installDomain %>/install</a></small>
+            <a href="#" class="copy-btn" data-url="https://<%= installDomain %>/install" title="Copy to clipboard" style="cursor: pointer; opacity: 0.6; text-decoration: none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </a>
+          </p>
+
           <footer>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
               <a href="/admin/apps/<%= app.id %>" role="button" class="outline">Edit</a>
@@ -66,5 +74,21 @@
       <% }); %>
     <% } %>
   </main>
+  <script>
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.copy-btn');
+      if (!btn) return;
+      e.preventDefault();
+      var url = btn.getAttribute('data-url');
+      navigator.clipboard.writeText(url).then(function() {
+        btn.style.opacity = '1';
+        btn.title = 'Copied!';
+        setTimeout(function() {
+          btn.style.opacity = '0.6';
+          btn.title = 'Copy to clipboard';
+        }, 1500);
+      });
+    });
+  </script>
 </body>
 </html>
